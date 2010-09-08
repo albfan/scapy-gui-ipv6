@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 
+######################################################
+##
+## 2.0
+##
+######################################################
 
 import gtk
 from scapy.all import *
@@ -20,7 +25,7 @@ class MyApp(object):
         self.RAconf = {'Prefix':None,'Prefixlen':None,'SourceLL':None}
         self.IPv6packet = {'EthHeader':'None','IPHeader':None,'NextHeader':None}
 
-        self.sourceqode = None ## var to display the sourceqode 
+        self.sourcecode = None ## var to display the sourcecode 
 
         ## init cbIface
         iflist = get_if_list()
@@ -160,26 +165,46 @@ class MyApp(object):
         self.IPv6packet['EthHeader'] = Ether(dst=self.EthH['LLDstAddr'],
                                              src=self.EthH['LLSourceAddr'])
 
-        self.sourceqode = ('Ether(dst=\''+str(self.EthH['LLDstAddr'])+
-                           '\', src=\''+str(self.EthH['LLSourceAddr'])+'\')')
+        if ((self.EthH['LLDstAddr'] != None) and (self.EthH['LLSourceAddr'] != None)):
+            self.sourcecode = ('Ether(dst=\''+str(self.EthH['LLDstAddr'])+
+                               '\', src=\''+str(self.EthH['LLSourceAddr'])+'\')')
+        elif (self.EthH['LLDstAddr'] != None):
+            self.sourcecode = ('Ether(dst=\''+str(self.EthH['LLDstAddr'])+'\')')
+        elif (self.EthH['LLSourceAddr'] != None):
+            self.sourcecode = ('Ether(src=\''+str(self.EthH['LLSourceAddr'])+'\')')
+        elif ((self.EthH['LLDstAddr'] == None) and (self.EthH['LLSourceAddr'] == None)):
+            self.sourcecode = ('Ether()')
 
         ##############
         ## IPv6 Header
 
         enDstIP =  self.builder.get_object('enDstIP')
-        self.IPH['Dst'] = enDstIP.get_text()
-        if (self.IPH['Dst'] != ''):
-            self.IPv6packet['IPHeader']=IPv6(dst=self.IPH['Dst'])
+        if enDstIP.get_text() != '':
+            self.IPH['Dst'] = enDstIP.get_text()
         else:
-            self.err_msg('Invalid Destination!')
+            self.IPH['Dst'] = None
 
         enSourceIP =  self.builder.get_object('enSourceIP')
-        self.IPH['SourceIP'] = enSourceIP.get_text()
-        if (self.IPH['SourceIP'] != ''):
-            self.IPv6packet['IPHeader'].src = self.IPH['SourceIP']
+        if enSourceIP.get_text() != '':
+            self.IPH['SourceIP'] = enSourceIP.get_text()
+        else:
+            self.IPH['SourceIP'] = None
 
-        self.sourceqode = (self.sourceqode+'/IPv6(dst=\''+self.IPH['Dst']+
-                           '\', src=\''+self.IPH['SourceIP']+'\')')
+        self.IPv6packet['IPHeader'] = IPv6(dst=self.IPH['Dst'],
+                                           src=self.IPH['SourceIP'])
+
+        ## sourcecode...
+        if ((self.IPH['Dst'] != None) and (self.IPH['SourceIP'] != None)):
+            self.sourcecode = (self.sourcecode+'/IPv6(dst=\''+self.IPH['Dst']+
+                               '\', src=\''+self.IPH['SourceIP']+'\')')
+        elif (self.IPH['Dst'] != None):
+            self.sourcecode = (self.sourcecode+'/IPv6(dst=\''+self.IPH['Dst']+
+                               '\')')
+        elif (self.IPH['SourceIP'] != None):
+            self.sourcecode = (self.sourcecode+'/IPv6(src=\''+
+                               self.IPH['SourceIP']+'\')')
+        elif ((self.IPH['Dst'] == None) and (self.IPH['SourceIP'] == None)):
+            self.sourcecode = (self.sourcecode+'/IPv6()')
 
         ############################
         ## add routing header if set
@@ -188,7 +213,7 @@ class MyApp(object):
         if enRtgHops.get_text() != '':
             self.IPH['RoutingHdr'] = IPv6ExtHdrRouting(addresses=
                                                        [enRtgHops.get_text()])
-            self.sourceqode = (self.sourceqode+
+            self.sourcecode = (self.sourcecode+
                                '/IPv6ExtHdrRouting(addresses=['+
                                enRtgHops.get_text()+'])')
         else:
@@ -219,9 +244,13 @@ class MyApp(object):
                   /self.IPH['RoutingHdr']/self.IPv6packet['NextHeader'],
                   iface = Interface)
 
-        ## show sourceqode in info_msg:
-        self.sourceqode = 'sendp('+self.sourceqode+', iface=\''+str(Interface)+'\')'
-        self.info_msg('Scapy Quellcode:\n\n'+self.sourceqode)
+        ## show sourcecode in info_msg:
+        if Interface == None:
+            self.sourcecode = 'sendp('+self.sourcecode+')'
+        else:
+            self.sourcecode = ('sendp('+self.sourcecode+
+                               ', iface=\''+str(Interface)+'\')')
+        self.info_msg('Scapy Quellcode:\n\n'+self.sourcecode)
 
     ###############
     ## Build ICMPv6
@@ -237,7 +266,7 @@ class MyApp(object):
         else:
             self.err_msg('Sorry ICMPv6 Type %s is not implemented yet.'
                          %self.ICMP['Type'])
-        
+
         return(ICMPv6)
 
     ## Router Advertisement
@@ -261,7 +290,7 @@ class MyApp(object):
             llad=ICMPv6NDOptSrcLLAddr(type=1, len=1,
                                       lladdr=self.RAconf['SourceLL'])
 
-            self.sourceqode = (self.sourceqode+
+            self.sourcecode = (self.sourcecode+
                                '/ICMPv6ND_RA(chlim=255, H=0L, M=0L, O=1L, '+
                                'routerlifetime=180, P=0L, retranstimer=0, '+
                                'prf=0L, res=0L)'+
@@ -275,7 +304,7 @@ class MyApp(object):
                                'lladdr='+self.RAconf['SourceLL']+')')
             return(ra/prefix_info/llad)
         else:
-            self.sourceqode = (self.sourceqode+
+            self.sourcecode = (self.sourcecode+
                                '/ICMPv6ND_RA(chlim=255, H=0L, M=0L, O=1L, '+
                                'routerlifetime=180, P=0L, retranstimer=0, '+
                                'prf=0L, res=0L)'+
@@ -291,7 +320,7 @@ class MyApp(object):
 
     def BuildICMPv6_Ping(self):
         q=ICMPv6EchoRequest()
-        self.sourceqode = self.sourceqode+'/ICMPv6EchoRequest()'
+        self.sourcecode = self.sourcecode+'/ICMPv6EchoRequest()'
         return(q)
 
     ## Packet Too Big
@@ -304,7 +333,7 @@ class MyApp(object):
         else:
             MTU = None
         q=ICMPv6PacketTooBig(mtu=int(MTU))
-        self.sourceqode = self.sourceqode+'/ICMPv6PacketTooBig(mtu='+MTU+')'
+        self.sourcecode = self.sourcecode+'/ICMPv6PacketTooBig(mtu='+MTU+')'
 
         enPCAP = self.builder.get_object('enPCAP')
         if enPCAP.get_text() != '':
@@ -316,7 +345,7 @@ class MyApp(object):
             else:
                 no = 0
             q = q/capture[no][IPv6]
-            self.sourceqode = (self.sourceqode+'/rdpcap(\''+path+'\')['+
+            self.sourcecode = (self.sourcecode+'/rdpcap(\''+path+'\')['+
                                str(no)+'][IPv6]')
         return(q)
 
