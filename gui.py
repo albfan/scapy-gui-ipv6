@@ -12,7 +12,7 @@ from PyQt4 import QtCore, QtGui, Qt
 from scapy.all import *
 
 class EH(QtGui.QDialog):
-    """Extension Header Routing"""
+    """Extension Header"""
     def __init__(self, ExtHdr):
         QtGui.QDialog.__init__(self)
         self.setWindowTitle("Extension Header")
@@ -29,37 +29,11 @@ class EH(QtGui.QDialog):
 
         self.Widget = QtGui.QWidget(self)
         self.Widget.setGeometry(QtCore.QRect(0, 60, 400, 300))
-        self.Widget_Label = QtGui.QLabel("Hop By Hop addresses:", self.Widget)
-        self.Widget_Label.setGeometry(QtCore.QRect(5, 10, 300, 30))
-        self.Widget_tableWidget = QtGui.QTableWidget(0, 1, self.Widget)
-        self.Widget_tableWidget.setHorizontalHeaderLabels(["Hop By Hop"])
-        self.Widget_tableWidget.setColumnWidth(0,200)
-        self.Widget_tableWidget.setGeometry(QtCore.QRect(10, 40, 250, 200))
-        self.Widget_lineEdit = QtGui.QLineEdit(self.Widget)
-        self.Widget_lineEdit.setGeometry(QtCore.QRect(10, 250, 250, 31))
-        self.Widget_PushButton = QtGui.QPushButton("Add",self.Widget)
-        self.Widget_PushButton.setGeometry(QtCore.QRect(270, 250, 98, 27))
-        self.Widget_PushButton_2 = QtGui.QPushButton("Delete",self.Widget)
-        self.Widget_PushButton_2.setGeometry(QtCore.QRect(270, 215, 98, 27))
-        self.connect(self.Widget_PushButton, QtCore.SIGNAL('clicked()'), self.AddIP)
-        self.connect(self.Widget_PushButton_2, QtCore.SIGNAL('clicked()'), self.DeleteIP)
+        
 
         self.Widget_2 = QtGui.QWidget(self)
         self.Widget_2.setGeometry(QtCore.QRect(0, 60, 400, 300))
-        self.Widget2_Label = QtGui.QLabel("Destination addresses:", self.Widget_2)
-        self.Widget2_Label.setGeometry(QtCore.QRect(5, 10, 300, 30))
-        self.Widget2_tableWidget = QtGui.QTableWidget(0, 1, self.Widget_2)
-        self.Widget2_tableWidget.setHorizontalHeaderLabels(["Destination addresses"])
-        self.Widget2_tableWidget.setColumnWidth(0,200)
-        self.Widget2_tableWidget.setGeometry(QtCore.QRect(10, 40, 250, 200))
-        self.Widget2_lineEdit = QtGui.QLineEdit(self.Widget_2)
-        self.Widget2_lineEdit.setGeometry(QtCore.QRect(10, 250, 250, 31))
-        self.Widget2_PushButton = QtGui.QPushButton("Add",self.Widget_2)
-        self.Widget2_PushButton.setGeometry(QtCore.QRect(270, 250, 98, 27))
-        self.Widget2_PushButton_2 = QtGui.QPushButton("Delete",self.Widget_2)
-        self.Widget2_PushButton_2.setGeometry(QtCore.QRect(270, 215, 98, 27))
-        self.connect(self.Widget2_PushButton, QtCore.SIGNAL('clicked()'), self.AddIP2)
-        self.connect(self.Widget2_PushButton_2, QtCore.SIGNAL('clicked()'), self.DeleteIP2)
+        
 
         self.Widget_3 = QtGui.QWidget(self)
         self.Widget_3.setGeometry(QtCore.QRect(0, 60, 400, 300))
@@ -75,8 +49,8 @@ class EH(QtGui.QDialog):
         self.Widget3_PushButton.setGeometry(QtCore.QRect(270, 250, 98, 27))
         self.Widget3_PushButton_2 = QtGui.QPushButton("Delete",self.Widget_3)
         self.Widget3_PushButton_2.setGeometry(QtCore.QRect(270, 215, 98, 27))
-        self.connect(self.Widget3_PushButton, QtCore.SIGNAL('clicked()'), self.AddIP3)
-        self.connect(self.Widget3_PushButton_2, QtCore.SIGNAL('clicked()'), self.DeleteIP3)
+        self.connect(self.Widget3_PushButton, QtCore.SIGNAL('clicked()'), self.AddIP)
+        self.connect(self.Widget3_PushButton_2, QtCore.SIGNAL('clicked()'), self.DeleteIP)
 
         self.Widget_4 = QtGui.QWidget(self)
         self.Widget_4.setGeometry(QtCore.QRect(0, 60, 400, 200))
@@ -97,19 +71,11 @@ class EH(QtGui.QDialog):
         elif self.ExtHdr[0] == 'Hop By Hop Options':
             self.comboBox.setCurrentIndex(0)
             self.Widget.setVisible(True)
-            i = len(self.ExtHdr[1])
-            for d in range(i):
-                self.Widget_tableWidget.insertRow(d)
-                t1 = QtGui.QTableWidgetItem(self.ExtHdr[1][d])
-                self.Widget_tableWidget.setItem(d, 0, t1)
+
         elif self.ExtHdr[0] == 'Destination Options':
             self.comboBox.setCurrentIndex(1)
             self.Widget_2.setVisible(True)
-            i = len(self.ExtHdr[1])
-            for d in range(i):
-                self.Widget2_tableWidget.insertRow(d)
-                t1 = QtGui.QTableWidgetItem(self.ExtHdr[1][d])
-                self.Widget2_tableWidget.setItem(d, 0, t1)
+
         elif self.ExtHdr[0] == 'Routing':
             self.comboBox.setCurrentIndex(2)
             self.Widget_3.setVisible(True)
@@ -118,12 +84,15 @@ class EH(QtGui.QDialog):
                 self.Widget3_tableWidget.insertRow(d)
                 t1 = QtGui.QTableWidgetItem(self.ExtHdr[1][d])
                 self.Widget3_tableWidget.setItem(d, 0, t1)
+            self.ExtHdr[1] = []
         elif self.ExtHdr[0] == 'Fragmentation':
             self.comboBox.setCurrentIndex(3)
             self.Widget_4.setVisible(True)
             self.Widget4_lineEdit.setText(str(self.ExtHdr[1]))
             if self.ExtHdr[2] == True:
                 self.Widget4_CheckBox.setChecked(True)
+            self.ExtHdr[1] = []
+            self.ExtHdr[2] = False
              
 
         self.connect(self.comboBox, QtCore.SIGNAL('activated(int)'), self.EHConf)
@@ -154,35 +123,8 @@ class EH(QtGui.QDialog):
             self.Widget_3.setVisible(False)
             self.Widget_4.setVisible(True)
 
+
     def AddIP(self):
-        numRows = self.Widget_tableWidget.rowCount()
-        if numRows < 16:
-            self.Widget_tableWidget.insertRow(numRows)
-            t1 = QtGui.QTableWidgetItem(self.Widget_lineEdit.text())
-            self.Widget_tableWidget.setItem(numRows, 0, t1)
-        else:
-            self.err_msg = QtGui.QMessageBox.information(None, "Info!", "More addresses are not possible!")
-
-    def DeleteIP(self):
-        Row = self.Widget_tableWidget.currentRow()
-        if Row >= 0:
-            self.Widget_tableWidget.removeRow(Row)
-
-    def AddIP2(self):
-        numRows = self.Widget2_tableWidget.rowCount()
-        if numRows < 16:
-            self.Widget2_tableWidget.insertRow(numRows)
-            t1 = QtGui.QTableWidgetItem(self.Widget2_lineEdit.text())
-            self.Widget2_tableWidget.setItem(numRows, 0, t1)
-        else:
-            self.err_msg = QtGui.QMessageBox.information(None, "Info!", "More addresses are not possible!")
-
-    def DeleteIP2(self):
-        Row = self.Widget2_tableWidget.currentRow()
-        if Row >= 0:
-            self.Widget2_tableWidget.removeRow(Row)
-
-    def AddIP3(self):
         numRows = self.Widget3_tableWidget.rowCount()
         if numRows < 16:
             self.Widget3_tableWidget.insertRow(numRows)
@@ -191,7 +133,7 @@ class EH(QtGui.QDialog):
         else:
             self.err_msg = QtGui.QMessageBox.information(None, "Info!", "More addresses are not possible!")
 
-    def DeleteIP3(self):
+    def DeleteIP(self):
         Row = self.Widget3_tableWidget.currentRow()
         if Row >= 0:
             self.Widget3_tableWidget.removeRow(Row)
@@ -199,25 +141,8 @@ class EH(QtGui.QDialog):
     def fertig(self):
         self.ExtHdr[0] = self.comboBox.currentText()
         self.addresses=[]
-        if self.ExtHdr[0] == 'Hop By Hop Options':
-            i = self.Widget_tableWidget.rowCount()
-            if i > 0:
-                for d in range(i):
-                    self.addresses.append([])
-                    self.addresses[d] = str(QtGui.QTableWidgetItem.text(self.Widget_tableWidget.item(d, 0)))
-                self.ExtHdr[1] = self.addresses
-            else:
-                self.err_msg = QtGui.QMessageBox.information(None, "Info!", "Min one addresse is requiered!")
-        elif self.ExtHdr[0] == 'Destination Options':
-            i = self.Widget2_tableWidget.rowCount()
-            if i > 0:
-                for d in range(i):
-                    self.addresses.append([])
-                    self.addresses[d] = str(QtGui.QTableWidgetItem.text(self.Widget2_tableWidget.item(d, 0)))
-                self.ExtHdr[1] = self.addresses
-            else:
-                self.err_msg = QtGui.QMessageBox.information(None, "Info!", "Min one addresse is requiered!")
-        elif self.ExtHdr[0] == 'Routing':
+            
+        if self.ExtHdr[0] == 'Routing':
             i = self.Widget3_tableWidget.rowCount()
             if i > 0:
                 for d in range(i):
@@ -532,6 +457,7 @@ class Main(QtGui.QMainWindow):
         """Wird aufgerufen, um alle eingestellten Daten zu speichern."""
         filename = QtGui.QFileDialog.getSaveFileName(self, "Save file", "")
         self.save = QtCore.QFile(filename)
+        self.save.remove()
         self.save.open(QtCore.QIODevice.ReadWrite)
         tab1 = (#self.tab1_comboBox.currentText() + '\n' +
                 self.tab1_lineEdit.text() + '\n' +
@@ -552,13 +478,16 @@ class Main(QtGui.QMainWindow):
         for d in range(i-1):
             if self.ExtHdr[d][0] == 'Fragmentation':
                 ExtHdr = (ExtHdr + self.ExtHdr[d][0] + '\n'
-                            + self.ExtHdr[d][1] + '\n'
+                            + str(self.ExtHdr[d][1]) + '\n'
                             + str(self.ExtHdr[d][2]) + '\n')
-            else:
+            elif 'Routing':
                 i2 = len(self.ExtHdr[d][1])
                 ExtHdr = (ExtHdr + str(self.ExtHdr[d][0]) + '\n' + str(i2) +'\n')
                 for d2 in range(i2):
                     ExtHdr = (ExtHdr + self.ExtHdr[d][1][d2] + '\n')
+            else:
+                ExtHdr = (ExtHdr + self.ExtHdr[d][0])
+                
         msg = (tab1 + tab2 + tab3 + RA + Payl + ExtHdr)
         self.save.write(str(msg))
         self.save.close();
@@ -633,7 +562,7 @@ class Main(QtGui.QMainWindow):
                 tmp = tmp[:tmp.find('\n')]
                 self.ExtHdr[d][2] = tmp
                 
-            else:
+            elif 'Routing':
                 tmp = str(self.load.readLine())
                 tmp = tmp[:tmp.find('\n')]
                 i2 = int(tmp)
@@ -780,23 +709,17 @@ class Main(QtGui.QMainWindow):
         ExtensionHeader = ''
         for d in range(Num-1):
             if self.ExtHdr[d][0] == 'Hop By Hop Options':
-                i = len(self.ExtHdr[d][1])
-                if (self.ExtHdr[d][1][0] != '' or None):
-                    self.sourcecode = (self.sourcecode + ' /IPv6ExtHdrHopByHop(options=[\'' + self.ExtHdr[d][1][0])
-                    if i > 1:
-                        for d2 in range(i-1):
-                            self.sourcecode = (self.sourcecode + '\',\'' +
-                                               self.ExtHdr[d][1][d2+1])
-                self.sourcecode = (self.sourcecode + '\'])')
+                self.sourcecode = (self.sourcecode + ' /IPv6ExtHdrHopByHop()')
+                if d == 0:
+                    ExtensionHeader = IPv6ExtHdrHopByHop()
+                else:
+                    ExtensionHeader = ExtensionHeader/IPv6ExtHdrHopByHop()
             elif self.ExtHdr[d][0] == 'Destination Options':
-                i = len(self.ExtHdr[d][1])
-                if (self.ExtHdr[d][1][0] != '' or None):
-                    self.sourcecode = (self.sourcecode + ' /IPv6ExtHdrDestOpt(options=[\'' + self.ExtHdr[d][1][0])
-                    if i > 1:
-                        for d2 in range(i-1):
-                            self.sourcecode = (self.sourcecode + '\',\'' +
-                                               self.ExtHdr[d][1][d2+1])
-                self.sourcecode = (self.sourcecode + '\'])')
+                self.sourcecode = (self.sourcecode + ' /IPv6ExtHdrDestOpt()')
+                if d == 0:
+                    ExtensionHeader = IPv6ExtHdrDestOpt()
+                else:
+                    ExtensionHeader = ExtensionHeader/IPv6ExtHdrDestOpt()
             elif self.ExtHdr[d][0] == 'Routing':
                 i = len(self.ExtHdr[d][1])
                 if (self.ExtHdr[d][1][0] != '' or None):
