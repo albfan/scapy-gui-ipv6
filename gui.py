@@ -3,7 +3,7 @@
 
 ######################################################
 ##
-## 1.0
+## 1.2
 ##
 ######################################################
 
@@ -54,12 +54,16 @@ class EH(QtGui.QDialog):
 
         self.Widget_4 = QtGui.QWidget(self)
         self.Widget_4.setGeometry(QtCore.QRect(0, 60, 400, 200))
-        self.Widget4_Label = QtGui.QLabel("Identification:", self.Widget_4)
+        self.Widget4_Label = QtGui.QLabel("Fragment Offset:", self.Widget_4)
         self.Widget4_Label.setGeometry(QtCore.QRect(5, 10, 300, 30))
         self.Widget4_lineEdit = QtGui.QLineEdit(self.Widget_4)
         self.Widget4_lineEdit.setGeometry(QtCore.QRect(10, 35, 300, 31))
+        self.Widget4_Label_2 = QtGui.QLabel("Identification:", self.Widget_4)
+        self.Widget4_Label_2.setGeometry(QtCore.QRect(5, 80, 300, 30))
+        self.Widget4_lineEdit_2 = QtGui.QLineEdit(self.Widget_4)
+        self.Widget4_lineEdit_2.setGeometry(QtCore.QRect(10, 105, 300, 31))
         self.Widget4_CheckBox = QtGui.QCheckBox("Last Package", self.Widget_4)
-        self.Widget4_CheckBox.setGeometry(QtCore.QRect(10, 80, 116, 22))
+        self.Widget4_CheckBox.setGeometry(QtCore.QRect(10, 160, 116, 22))
         
         self.Widget.setVisible(False)
         self.Widget_2.setVisible(False)
@@ -84,15 +88,12 @@ class EH(QtGui.QDialog):
                 self.Widget3_tableWidget.insertRow(d)
                 t1 = QtGui.QTableWidgetItem(self.ExtHdr[1][d])
                 self.Widget3_tableWidget.setItem(d, 0, t1)
-            self.ExtHdr[1] = []
         elif self.ExtHdr[0] == 'Fragmentation':
             self.comboBox.setCurrentIndex(3)
             self.Widget_4.setVisible(True)
-            self.Widget4_lineEdit.setText(str(self.ExtHdr[1]))
-            if self.ExtHdr[2] == True:
+            self.Widget4_lineEdit_2.setText(str(self.ExtHdr[1]))
+            if self.ExtHdr[2] == 0:
                 self.Widget4_CheckBox.setChecked(True)
-            self.ExtHdr[1] = []
-            self.ExtHdr[2] = False
              
 
         self.connect(self.comboBox, QtCore.SIGNAL('activated(int)'), self.EHConf)
@@ -152,8 +153,11 @@ class EH(QtGui.QDialog):
             else:
                 self.err_msg = QtGui.QMessageBox.information(None, "Info!", "Min one addresse is requiered!")
         elif self.ExtHdr[0] == 'Fragmentation':
-            self.ExtHdr[1] = int(self.Widget4_lineEdit.text())
-            self.ExtHdr[2] = self.Widget4_CheckBox.isChecked()
+            self.ExtHdr[1] = int(self.Widget4_lineEdit_2.text())
+            if self.Widget4_CheckBox.isChecked() == True:
+                self.ExtHdr[2] = 0
+            else:
+                self.ExtHdr[2] = 1
         #    self.err_msg = QtGui.QMessageBox.information(None, "Info!", "The Routing Address is requiered!")
         self.accept()
 
@@ -182,7 +186,7 @@ class RA(QtGui.QDialog):
         self.lineEdit.setGeometry(QtCore.QRect(10, 40, 300, 31))
         self.lineEdit.setText(self.RAconf['Prefix'])
         self.lineEdit_2 = QtGui.QLineEdit(self)
-        self.lineEdit_2.setGeometry(QtCore.QRect(10, 110, 60, 31))
+        self.lineEdit_2.setGeometry(QtCore.QRect(10, 110, 60, 31)) 
         self.lineEdit_2.setText(self.RAconf['Prefixlen'])
         self.comboBox = QtGui.QComboBox(self)
         self.comboBox.setGeometry(QtCore.QRect(10, 215, 300, 31))
@@ -202,12 +206,21 @@ class RA(QtGui.QDialog):
         self.show()
  
     def fertig(self):
+        if ((self.lineEdit.text() == '' or None) or 
+            (self.lineEdit_2.text() == '' or None)):
+            self.err_msg = QtGui.QMessageBox.information(None, "Info!", "Prefix and Prefix length are requiered!\n(Default: Prefix = 'fd00:141:64:1::'; Prefixlength = 32)")
+        if self.RAconf['Prefix'] == None:
+            self.lineEdit.setText(self.RAconf['Prefix'])
+        else:
+            self.lineEdit.setText('fd00:141:64:1::')
+        if self.RAconf['Prefixlen'] == None:
+            self.lineEdit_2.setText(self.RAconf['Prefixlen'])
+        else:
+            self.lineEdit_2.setText('32')
         self.RAconf['Prefix'] = self.lineEdit.text()
         self.RAconf['Prefixlen'] = self.lineEdit_2.text()
         self.RAconf['SourceLL'] = self.comboBox.currentText()
-        if ((self.RAconf['Prefix'] == '' or None) or 
-            (self.RAconf['Prefixlen'] == '' or None)):
-            self.err_msg = QtGui.QMessageBox.information(None, "Info!", "Prefix and Prefix length are requiered!")
+        
         self.accept()
 
 class Payload(QtGui.QDialog):
@@ -254,14 +267,13 @@ class Main(QtGui.QMainWindow):
     def __init__(self):
         QtGui.QMainWindow.__init__(self)
         self.setWindowTitle("Scapy Tool fuer Sicherheitstest")
-        self.resize(500, 390)
+        self.resize(600, 390)
         self.makeActions()
         self.makeMenu()
 
         self.EthH = {'LLSourceAddr':None,'LLDstAddr':None}
         self.IPH = {'Dst':None,'SourceIP':None,'NextHeader':None}
-        self.ICMP = {'Type':'128'}
-        self.RAconf = {'Prefix':'','Prefixlen':'','SourceLL':''}
+        self.RAconf = {'Prefix':'fd00:141:64:1::','Prefixlen':'32','SourceLL':''}
         self.IPv6packet = {'EthHeader':None,'IPHeader':None,
                            'ExtHeader':None,'NextHeader':None}
 
@@ -275,7 +287,7 @@ class Main(QtGui.QMainWindow):
 
         # TabWidget
         self.tabWidget = QtGui.QTabWidget(self)
-        self.tabWidget.setGeometry(QtCore.QRect(0, 25, 500, 300))
+        self.tabWidget.setGeometry(QtCore.QRect(0, 25, 600, 300))
 
 	    # Ertes Tab - Ethernet Header
         self.tab = QtGui.QWidget(self.tabWidget)
@@ -308,54 +320,114 @@ class Main(QtGui.QMainWindow):
         self.tab2_lineEdit_2 = QtGui.QLineEdit(self.tab_2)
         self.tab2_lineEdit_2.setGeometry(QtCore.QRect(10, 130, 300, 31))
 
-        # Drittes Tab - Next Header
+        # Drittes Tab - Extension Header
         self.tab_3 = QtGui.QWidget(self.tabWidget)
-        self.tabWidget.addTab(self.tab_3, "Next Header")
+        self.tabWidget.addTab(self.tab_3, "Extension Header")
+        self.tab3_tableWidget = QtGui.QTableWidget(0, 1, self.tab_3)
+        self.tab3_tableWidget.setHorizontalHeaderLabels(["Extension Header"])
+        self.tab3_tableWidget.setColumnWidth(0,300)
+        self.tab3_tableWidget.setGeometry(QtCore.QRect(50, 10, 320, 250))
+        self.tab3_PushButton = QtGui.QPushButton("Add", self.tab_3)
+        self.tab3_PushButton.setGeometry(QtCore.QRect(420, 30, 98, 27))
+        self.tab3_PushButton_2 = QtGui.QPushButton("Edit", self.tab_3)
+        self.tab3_PushButton_2.setGeometry(QtCore.QRect(420, 60, 98, 27))
+        self.tab3_PushButton_3 = QtGui.QPushButton("Delete", self.tab_3)
+        self.tab3_PushButton_3.setGeometry(QtCore.QRect(420, 90, 98, 27))
+        self.connect(self.tab3_PushButton, QtCore.SIGNAL('clicked(bool)'), self.slotAddExtHdr)
+        self.connect(self.tab3_PushButton_2, QtCore.SIGNAL('clicked(bool)'), self.slotEditExtHdr)
+        self.connect(self.tab3_PushButton_3, QtCore.SIGNAL('clicked(bool)'), self.slotDeleteExtHdr)
 
-            # TabWidget_2 im Dritten Tab
-        self.tabWidget_2 = QtGui.QTabWidget(self.tab_3)
-        self.tabWidget_2.setGeometry(QtCore.QRect(0, 0, 490, 260))
-
-            # Erstes Tab im TabWidget_2 - Routing Header 0
-        self.tab3_tab = QtGui.QWidget(self.tabWidget_2)
-        self.tabWidget_2.addTab(self.tab3_tab, "Extension Header")
-        self.tab3_tab1_tableWidget = QtGui.QTableWidget(0, 1, self.tab3_tab)
-        self.tab3_tab1_tableWidget.setHorizontalHeaderLabels(["Extension Header"])
-        self.tab3_tab1_tableWidget.setColumnWidth(0,300)
-        self.tab3_tab1_tableWidget.setGeometry(QtCore.QRect(0, 0, 320, 200))
-        self.tab3_tab1_PushButton = QtGui.QPushButton("Add", self.tab3_tab)
-        self.tab3_tab1_PushButton.setGeometry(QtCore.QRect(350, 30, 98, 27))
-        self.tab3_tab1_PushButton_2 = QtGui.QPushButton("Edit", self.tab3_tab)
-        self.tab3_tab1_PushButton_2.setGeometry(QtCore.QRect(350, 60, 98, 27))
-        self.tab3_tab1_PushButton_3 = QtGui.QPushButton("Delete", self.tab3_tab)
-        self.tab3_tab1_PushButton_3.setGeometry(QtCore.QRect(350, 90, 98, 27))
-        self.connect(self.tab3_tab1_PushButton, QtCore.SIGNAL('clicked(bool)'), self.slotAddExtHdr)
-        self.connect(self.tab3_tab1_PushButton_2, QtCore.SIGNAL('clicked(bool)'), self.slotEditExtHdr)
-        self.connect(self.tab3_tab1_PushButton_3, QtCore.SIGNAL('clicked(bool)'), self.slotDeleteExtHdr)
-
-            # Zweites Tab im TabWidget_2 - ICMPv6
-        self.tab3_tab_2 = QtGui.QWidget()
-        self.tabWidget_2.addTab(self.tab3_tab_2, "ICMPv6")
-        self.tab3_tab2_Label = QtGui.QLabel("select the ICMPv6 Type", self.tab3_tab_2)
-        self.tab3_tab2_Label.setGeometry(QtCore.QRect(5, 0, 300, 30))
-        self.tab3_tab2_Label_2 = QtGui.QLabel("MTU:", self.tab3_tab_2)
-        self.tab3_tab2_Label_2.setGeometry(QtCore.QRect(180, 126, 60, 30))
-        self.tab3_tab2_radioButton = QtGui.QRadioButton("Ping", self.tab3_tab_2)
-        self.tab3_tab2_radioButton.setGeometry(QtCore.QRect(30, 50, 60, 22))
-        self.tab3_tab2_radioButton.setChecked(True)
-        self.tab3_tab2_radioButton_2 = QtGui.QRadioButton("Router Advertisement", self.tab3_tab_2)
-        self.tab3_tab2_radioButton_2.setGeometry(QtCore.QRect(30, 90, 180, 22))
-        self.connect(self.tab3_tab2_radioButton_2, QtCore.SIGNAL('clicked(bool)'), self.slotRouterAdvertisement)
-        self.tab3_tab2_radioButton_3 = QtGui.QRadioButton("Packet Too Big", self.tab3_tab_2)
-        self.tab3_tab2_radioButton_3.setGeometry(QtCore.QRect(30, 130, 130, 22))
-        self.connect(self.tab3_tab2_radioButton_3, QtCore.SIGNAL('clicked(bool)'), self.slotPacket_Too_Big)
-        self.tab3_tab2_lineEdit = QtGui.QLineEdit("1240", self.tab3_tab_2)
-        self.tab3_tab2_lineEdit.setGeometry(QtCore.QRect(220, 130, 61, 21))
+        # Viertes Tab - Next Header
+        self.tab_4 = QtGui.QWidget(self.tabWidget)
+        self.tabWidget.addTab(self.tab_4, "Next Header")
+        self.tab4_comboBox = QtGui.QComboBox(self.tab_4)
+        self.tab4_comboBox.insertItem(0, 'ICMP')
+        self.tab4_comboBox.insertItem(1, 'TCP')
+        self.tab4_comboBox.insertItem(2, 'UDP')
+        self.tab4_comboBox.insertItem(3, 'No Next Header')
+        self.tab4_comboBox.setGeometry(QtCore.QRect(10, 30, 250, 31))
+        self.tab4_Widget = QtGui.QWidget(self.tab_4)
+        self.tab4_Widget.setGeometry(QtCore.QRect(0, 60, 600, 250))
+        self.tab4_Widget_radioButton = QtGui.QRadioButton("Ping", self.tab4_Widget)
+        self.tab4_Widget_radioButton.setGeometry(QtCore.QRect(30, 30, 60, 22))
+        self.tab4_Widget_radioButton.setChecked(True)
+        self.tab4_Widget_radioButton_2 = QtGui.QRadioButton("Router Advertisement", self.tab4_Widget)
+        self.tab4_Widget_radioButton_2.setGeometry(QtCore.QRect(30, 70, 180, 22))
+        self.connect(self.tab4_Widget_radioButton_2, QtCore.SIGNAL('clicked(bool)'), self.slotRouterAdvertisement)
+        self.tab4_Widget_radioButton_3 = QtGui.QRadioButton("Packet Too Big", self.tab4_Widget)
+        self.tab4_Widget_radioButton_3.setGeometry(QtCore.QRect(30, 110, 130, 22))
+        self.connect(self.tab4_Widget_radioButton_3, QtCore.SIGNAL('clicked(bool)'), self.slotPacket_Too_Big)
+        self.tab4_Widget_Label = QtGui.QLabel("MTU:", self.tab4_Widget)
+        self.tab4_Widget_Label.setGeometry(QtCore.QRect(80, 136, 60, 30))
+        self.tab4_Widget_lineEdit = QtGui.QLineEdit("1240", self.tab4_Widget)
+        self.tab4_Widget_lineEdit.setGeometry(QtCore.QRect(120, 140, 61, 21))
+        self.tab4_Widget_2 = QtGui.QWidget(self.tab_4)
+        self.tab4_Widget_2.setGeometry(QtCore.QRect(0, 60, 600, 250))
+        self.tab4_Widget_2.setVisible(False)
+        self.tab4_Widget2_Label = QtGui.QLabel("Source Port:", self.tab4_Widget_2)
+        self.tab4_Widget2_Label.setGeometry(QtCore.QRect(30, 30, 120, 30))
+        self.tab4_Widget2_lineEdit = QtGui.QLineEdit("20", self.tab4_Widget_2)
+        self.tab4_Widget2_lineEdit.setGeometry(QtCore.QRect(150, 34, 60, 21))
+        self.tab4_Widget2_Label_2 = QtGui.QLabel("Destination Port:", self.tab4_Widget_2)
+        self.tab4_Widget2_Label_2.setGeometry(QtCore.QRect(30, 70, 120, 30))
+        self.tab4_Widget2_lineEdit_2 = QtGui.QLineEdit("80", self.tab4_Widget_2)
+        self.tab4_Widget2_lineEdit_2.setGeometry(QtCore.QRect(150, 74, 60, 21))
+        self.tab4_Widget3_Label_3 = QtGui.QLabel("Payload:", self.tab4_Widget_2)
+        self.tab4_Widget3_Label_3.setGeometry(QtCore.QRect(300, 0, 120, 30))
+        self.tab4_Widget2_radioButton = QtGui.QRadioButton("String with 'X' * Length", self.tab4_Widget_2)
+        self.tab4_Widget2_radioButton.setGeometry(QtCore.QRect(330, 30, 200, 22))
+        self.tab4_Widget2_radioButton.setChecked(True)
+        self.tab4_Widget2_Label_4 = QtGui.QLabel("Length:", self.tab4_Widget_2)
+        self.tab4_Widget2_Label_4.setGeometry(QtCore.QRect(350, 50, 120, 30))
+        self.tab4_Widget2_lineEdit_3 = QtGui.QLineEdit("1", self.tab4_Widget_2)
+        self.tab4_Widget2_lineEdit_3.setGeometry(QtCore.QRect(400, 54, 60, 21))
+        self.tab4_Widget2_radioButton_2 = QtGui.QRadioButton("String:", self.tab4_Widget_2)
+        self.tab4_Widget2_radioButton_2.setGeometry(QtCore.QRect(330, 90, 200, 22))
+        self.tab4_Widget2_lineEdit_4 = QtGui.QLineEdit("X", self.tab4_Widget_2)
+        self.tab4_Widget2_lineEdit_4.setGeometry(QtCore.QRect(400, 91, 60, 21))
+        self.tab4_Widget2_radioButton_3 = QtGui.QRadioButton("pcap File:", self.tab4_Widget_2)
+        self.tab4_Widget2_radioButton_3.setGeometry(QtCore.QRect(330, 130, 200, 22))
+        self.connect(self.tab4_Widget2_radioButton_3, QtCore.SIGNAL('clicked(bool)'), self.slotPayloadTCP)
+        self.tab4_Widget2_radioButton_4 = QtGui.QRadioButton("No Payload", self.tab4_Widget_2)
+        self.tab4_Widget2_radioButton_4.setGeometry(QtCore.QRect(330, 170, 200, 22))
+        self.tab4_Widget_3 = QtGui.QWidget(self.tab_4)
+        self.tab4_Widget_3.setGeometry(QtCore.QRect(0, 60, 600, 250))
+        self.tab4_Widget_3.setVisible(False)
+        self.tab4_Widget3_Label = QtGui.QLabel("Source Port:", self.tab4_Widget_3)
+        self.tab4_Widget3_Label.setGeometry(QtCore.QRect(30, 30, 120, 30))
+        self.tab4_Widget3_lineEdit = QtGui.QLineEdit("53", self.tab4_Widget_3)
+        self.tab4_Widget3_lineEdit.setGeometry(QtCore.QRect(150, 34, 60, 21))
+        self.tab4_Widget3_Label_2 = QtGui.QLabel("Destination Port:", self.tab4_Widget_3)
+        self.tab4_Widget3_Label_2.setGeometry(QtCore.QRect(30, 70, 120, 30))
+        self.tab4_Widget3_lineEdit_2 = QtGui.QLineEdit("53", self.tab4_Widget_3)
+        self.tab4_Widget3_lineEdit_2.setGeometry(QtCore.QRect(150, 74, 60, 21))
+        self.tab4_Widget3_Label_3 = QtGui.QLabel("Payload:", self.tab4_Widget_3)
+        self.tab4_Widget3_Label_3.setGeometry(QtCore.QRect(300, 0, 120, 30))
+        self.tab4_Widget3_radioButton = QtGui.QRadioButton("String with 'X' * Length", self.tab4_Widget_3)
+        self.tab4_Widget3_radioButton.setGeometry(QtCore.QRect(330, 30, 200, 22))
+        self.tab4_Widget3_radioButton.setChecked(True)
+        self.tab4_Widget3_Label_4 = QtGui.QLabel("Length:", self.tab4_Widget_3)
+        self.tab4_Widget3_Label_4.setGeometry(QtCore.QRect(350, 50, 120, 30))
+        self.tab4_Widget3_lineEdit_3 = QtGui.QLineEdit("1", self.tab4_Widget_3)
+        self.tab4_Widget3_lineEdit_3.setGeometry(QtCore.QRect(400, 54, 60, 21))
+        self.tab4_Widget3_radioButton_2 = QtGui.QRadioButton("String:", self.tab4_Widget_3)
+        self.tab4_Widget3_radioButton_2.setGeometry(QtCore.QRect(330, 90, 200, 22))
+        self.tab4_Widget3_lineEdit_4 = QtGui.QLineEdit("X", self.tab4_Widget_3)
+        self.tab4_Widget3_lineEdit_4.setGeometry(QtCore.QRect(400, 91, 60, 21))
+        self.tab4_Widget3_radioButton_3 = QtGui.QRadioButton("pcap File:", self.tab4_Widget_3)
+        self.tab4_Widget3_radioButton_3.setGeometry(QtCore.QRect(330, 130, 200, 22))
+        self.connect(self.tab4_Widget3_radioButton_3, QtCore.SIGNAL('clicked(bool)'), self.slotPayloadUDP)
+        self.tab4_Widget3_radioButton_4 = QtGui.QRadioButton("No Payload", self.tab4_Widget_3)
+        self.tab4_Widget3_radioButton_4.setGeometry(QtCore.QRect(330, 170, 200, 22))
+        self.tab4_Widget_4 = QtGui.QWidget(self.tab_4)
+        self.tab4_Widget_4.setGeometry(QtCore.QRect(0, 60, 600, 250))
+        self.tab4_Widget_4.setVisible(False)
+        self.connect(self.tab4_comboBox, QtCore.SIGNAL('activated(int)'), self.NHConf)
 
         # Send Button
         self.SendButton = QtGui.QPushButton("Send", self)
-        self.SendButton.setGeometry(QtCore.QRect(200, 330, 98, 27))
-        self.connect(self.SendButton, QtCore.SIGNAL('clicked(bool)'), self.Buildit)
+        self.SendButton.setGeometry(QtCore.QRect(250, 330, 98, 27))
+        self.connect(self.SendButton, QtCore.SIGNAL('clicked(bool)'), self.slotSend)
         self.show()
 
         ## init cbIface
@@ -372,6 +444,28 @@ class Main(QtGui.QMainWindow):
         self.tab1_comboBox_2.insertItem(0, '')
         for d in range(0, i):
             self.tab1_comboBox_2.insertItem(i+1, get_if_hwaddr(iflist[d]))
+
+    def NHConf(self):
+        if self.tab4_comboBox.currentText() == 'ICMP':
+            self.tab4_Widget.setVisible(True)
+            self.tab4_Widget_2.setVisible(False)
+            self.tab4_Widget_3.setVisible(False)
+            self.tab4_Widget_4.setVisible(False)
+        elif self.tab4_comboBox.currentText() == 'TCP':
+            self.tab4_Widget.setVisible(False)
+            self.tab4_Widget_2.setVisible(True)
+            self.tab4_Widget_3.setVisible(False)
+            self.tab4_Widget_4.setVisible(False)
+        elif self.tab4_comboBox.currentText() == 'UDP':
+            self.tab4_Widget.setVisible(False)
+            self.tab4_Widget_2.setVisible(False)
+            self.tab4_Widget_3.setVisible(True)
+            self.tab4_Widget_4.setVisible(False)
+        elif self.tab4_comboBox.currentText() == 'No Next Header':
+            self.tab4_Widget.setVisible(False)
+            self.tab4_Widget_2.setVisible(False)
+            self.tab4_Widget_3.setVisible(False)
+            self.tab4_Widget_4.setVisible(True)
 
     def makeActions(self):
         self._saveAction = QtGui.QAction("&Save", None)
@@ -400,35 +494,35 @@ class Main(QtGui.QMainWindow):
         eh = EH(self.ExtHdr[Rows-1])
         eh.exec_()
         if self.ExtHdr[Rows-1][0] != '':
-            numRows = self.tab3_tab1_tableWidget.rowCount()
-            self.tab3_tab1_tableWidget.insertRow(numRows)
+            numRows = self.tab3_tableWidget.rowCount()
+            self.tab3_tableWidget.insertRow(numRows)
             t1 = QtGui.QTableWidgetItem(self.ExtHdr[Rows-1][0])
-            self.tab3_tab1_tableWidget.setItem(numRows, 0, t1)
-            item = self.tab3_tab1_tableWidget.item(numRows, 0)
+            self.tab3_tableWidget.setItem(numRows, 0, t1)
+            item = self.tab3_tableWidget.item(numRows, 0)
             item.setFlags(Qt.Qt.ItemIsSelectable | Qt.Qt.ItemIsEnabled )
             self.ExtHdr.append(['','',''])
         self.tabWidget.setEnabled(True)
         self.SendButton.setEnabled(True)
 
     def slotEditExtHdr(self):
-        Row = self.tab3_tab1_tableWidget.currentRow()
+        Row = self.tab3_tableWidget.currentRow()
         if Row != -1:
             self.tabWidget.setEnabled(False)
             self.SendButton.setEnabled(False)
             eh = EH(self.ExtHdr[Row])
             eh.exec_()
             t1 = QtGui.QTableWidgetItem(self.ExtHdr[Row][0])
-            self.tab3_tab1_tableWidget.setItem(Row, 0, t1)
+            self.tab3_tableWidget.setItem(Row, 0, t1)
             self.tabWidget.setEnabled(True)
             self.SendButton.setEnabled(True)
 
     def slotDeleteExtHdr(self):
         """Löscht den markierten Extension Header"""
-        Row = self.tab3_tab1_tableWidget.currentRow()
+        Row = self.tab3_tableWidget.currentRow()
         if Row >= 0:
-            self.tab3_tab1_tableWidget.removeRow(Row)
+            self.tab3_tableWidget.removeRow(Row)
             del self.ExtHdr[Row]
-            self.tab3_tab1_tableWidget.setCurrentCell(Row,0)
+            self.tab3_tableWidget.setCurrentCell(Row,0)
 
     def slotRouterAdvertisement(self):
         """Ruft die Router Advertisement auf"""
@@ -436,9 +530,6 @@ class Main(QtGui.QMainWindow):
         self.SendButton.setEnabled(False)
         ra = RA(self.RAconf)
         ra.exec_()
-        if ((self.RAconf['Prefix'] == '' or None) or 
-            (self.RAconf['Prefixlen'] == '' or None)):
-             self.tab3_tab2_radioButton.setChecked(True)
         self.tabWidget.setEnabled(True)
         self.SendButton.setEnabled(True)
 
@@ -450,130 +541,156 @@ class Main(QtGui.QMainWindow):
         payload.exec_()
         if ((self.PayloadFile['Capture File'] == '' or None)):
             self.err_msg = QtGui.QMessageBox.information(None, "Info!", "Capture File are requiered\nto create a valid package!")
+            self.tab4_Widget_radioButton.setChecked(True)
+        self.tabWidget.setEnabled(True)
+        self.SendButton.setEnabled(True)
+
+    def slotPayloadTCP(self):
+        """Ruft die Paylaod Einstellungen auf"""
+        self.tabWidget.setEnabled(False)
+        self.SendButton.setEnabled(False)
+        payload = Payload(self.PayloadFile)
+        payload.exec_()
+        if ((self.PayloadFile['Capture File'] == '' or None)):
+            self.err_msg = QtGui.QMessageBox.information(None, "Info!", "Capture File are requiered\nto create a valid package!")
+            self.tab4_Widget2_radioButton.setChecked(True)
+        self.tabWidget.setEnabled(True)
+        self.SendButton.setEnabled(True)
+
+    def slotPayloadUDP(self):
+        """Ruft die Paylaod Einstellungen auf"""
+        self.tabWidget.setEnabled(False)
+        self.SendButton.setEnabled(False)
+        payload = Payload(self.PayloadFile)
+        payload.exec_()
+        if ((self.PayloadFile['Capture File'] == '' or None)):
+            self.err_msg = QtGui.QMessageBox.information(None, "Info!", "Capture File are requiered\nto create a valid package!")
+            self.tab4_Widget3_radioButton.setChecked(True)
         self.tabWidget.setEnabled(True)
         self.SendButton.setEnabled(True)
 
     def slotSave(self):
         """Wird aufgerufen, um alle eingestellten Daten zu speichern."""
-        filename = QtGui.QFileDialog.getSaveFileName(self, "Save file", "")
-        self.save = QtCore.QFile(filename)
-        self.save.remove()
-        self.save.open(QtCore.QIODevice.ReadWrite)
-        tab1 = (#self.tab1_comboBox.currentText() + '\n' +
-                self.tab1_lineEdit.text() + '\n' +
-                self.tab1_comboBox_2.currentText() + '\n' )
-        tab2 = (self.tab2_lineEdit.text() + '\n' +
-                self.tab2_lineEdit_2.text() + '\n')            
-        tab3 = (str(self.tab3_tab2_radioButton.isChecked()) + '\n' +
-                str(self.tab3_tab2_radioButton_2.isChecked()) + '\n' +
-                str(self.tab3_tab2_radioButton_3.isChecked()) + '\n' +
-                self.tab3_tab2_lineEdit.text() + '\n')
-        RA = (self.RAconf['Prefix'] + '\n' +
-                self.RAconf['Prefixlen'] + '\n' +
-                self.RAconf['SourceLL'] + '\n')
-        Payl = (self.PayloadFile['Capture File'] + '\n' +
-                self.PayloadFile['Packet No.'] + '\n')
-        i = len(self.ExtHdr)
-        ExtHdr = (str(i-1) + '\n')
-        for d in range(i-1):
-            if self.ExtHdr[d][0] == 'Fragmentation':
-                ExtHdr = (ExtHdr + self.ExtHdr[d][0] + '\n'
-                            + str(self.ExtHdr[d][1]) + '\n'
-                            + str(self.ExtHdr[d][2]) + '\n')
-            elif 'Routing':
-                i2 = len(self.ExtHdr[d][1])
-                ExtHdr = (ExtHdr + str(self.ExtHdr[d][0]) + '\n' + str(i2) +'\n')
-                for d2 in range(i2):
-                    ExtHdr = (ExtHdr + self.ExtHdr[d][1][d2] + '\n')
-            else:
-                ExtHdr = (ExtHdr + self.ExtHdr[d][0])
-                
-        msg = (tab1 + tab2 + tab3 + RA + Payl + ExtHdr)
-        self.save.write(str(msg))
-        self.save.close();
+#Destination Address!!!! abfragen!!!
+        filename = QtGui.QFileDialog.getSaveFileName(self, "Save file", "",("pcap(*.cap)"))
+        filename=(filename+'.cap')
+        self.Buildit(1,filename)
 
     def slotLoad(self):
-        """Wird aufgerufen, um fruher eingestellten Daten zu laden."""
-        filename = QtGui.QFileDialog.getOpenFileName(self,"Load File", "")
-        self.load = QtCore.QFile(filename)
-        self.load.open(QtCore.QIODevice.ReadOnly)
-#        self.tab1_comboBox.setEditable(True)
- #       tmp = str(self.load.readLine())
-  #      tmp = tmp[:tmp.find('\n')]
-   #     self.tab1_comboBox.setEditText(tmp)
-    #    self.tab1_comboBox.setEditable(False)
-        tmp = str(self.load.readLine())
-        tmp = tmp[:tmp.find('\n')]
-        self.tab1_lineEdit.setText(tmp)
-        tmp = str(self.load.readLine())
-        tmp = tmp[:tmp.find('\n')]
-        self.tab1_comboBox_2.setEditText(tmp)
-        tmp = str(self.load.readLine())
-        tmp = tmp[:tmp.find('\n')]
-        self.tab2_lineEdit.setText(tmp)
-        tmp = str(self.load.readLine())
-        tmp = tmp[:tmp.find('\n')]
-        self.tab2_lineEdit_2.setText(tmp)
-        if self.load.readLine() == True:
-            self.tab3_tab2_radioButton.setChecked(True)
-        if self.load.readLine() == True:
-            self.tab3_tab2_radioButton_2.setChecked(True)
-        if self.load.readLine() == True:
-            self.tab3_tab2_radioButton_3.setChecked(True)
-        tmp = str(self.load.readLine())
-        tmp = tmp[:tmp.find('\n')]
-        self.tab3_tab2_lineEdit.setText(tmp)
-        tmp = str(self.load.readLine())
-        tmp = tmp[:tmp.find('\n')]
-        self.RAconf['Prefix'] = tmp
-        tmp = str(self.load.readLine())
-        tmp = tmp[:tmp.find('\n')]
-        self.RAconf['Prefixlen'] = tmp
-        tmp = str(self.load.readLine())
-        tmp = tmp[:tmp.find('\n')]
-        self.RAconf['SourceLL'] = tmp
-        tmp = str(self.load.readLine())
-        tmp = tmp[:tmp.find('\n')]
-        self.PayloadFile['Capture File'] = tmp
-        tmp = str(self.load.readLine())
-        tmp = tmp[:tmp.find('\n')]
-        self.PayloadFile['Packet No.'] = tmp
-        tmp = str(self.load.readLine())
-        tmp = tmp[:tmp.find('\n')]
-        i = int(tmp)
-        for d in range(self.tab3_tab1_tableWidget.rowCount()):
-            self.tab3_tab1_tableWidget.removeRow(0)
+        """Wird aufgerufen, um früher eingestellten Daten zu laden."""
+        filename = QtGui.QFileDialog.getOpenFileName(self,"Load File", "",("pcap(*.cap)"))
+        Packet = rdpcap(str(filename))
+        Data = Packet[0]
+        Data.show2()
+        self.tab1_lineEdit.setText(Data[0].dst)
+        self.tab1_comboBox_2.setEditText(Data[0].src)
+        self.tab2_lineEdit.setText(Data[1].dst)
+        self.tab2_lineEdit_2.setText(Data[1].src)
+        Data = Data[1]
+        self.NextHeader = Data.nh
+        Data = Data[1]
+        for d in range(self.tab3_tableWidget.rowCount()):
+            self.tab3_tableWidget.removeRow(0)
         self.ExtHdr = [['','','']]
-        for d in range(i):
-            tmp = str(self.load.readLine())
-            tmp = tmp[:tmp.find('\n')]
-            self.ExtHdr[d][0] = tmp
-            numRows = self.tab3_tab1_tableWidget.rowCount()
-            self.tab3_tab1_tableWidget.insertRow(numRows)
-            t1 = QtGui.QTableWidgetItem(self.ExtHdr[d][0])
-            self.tab3_tab1_tableWidget.setItem(numRows, 0, t1)
-            item = self.tab3_tab1_tableWidget.item(numRows, 0)
-            item.setFlags(Qt.Qt.ItemIsSelectable | Qt.Qt.ItemIsEnabled )
-            if self.ExtHdr[d][0] == 'Fragmentation':
-                tmp = str(self.load.readLine())
-                tmp = tmp[:tmp.find('\n')]
-                self.ExtHdr[d][1] = tmp
-                tmp = str(self.load.readLine())
-                tmp = tmp[:tmp.find('\n')]
-                self.ExtHdr[d][2] = tmp
-                
-            elif 'Routing':
-                tmp = str(self.load.readLine())
-                tmp = tmp[:tmp.find('\n')]
-                i2 = int(tmp)
-                addresses = []
-                for d2 in range(i2):
-                    addresses.append([''])
-                    tmp = str(self.load.readLine())
-                    tmp = tmp[:tmp.find('\n')]
-                    addresses[d2] = tmp
-                self.ExtHdr[d][1] = addresses
-            self.ExtHdr.append(['','',''])
+        d = 0
+        temp = 0
+        count = 0
+        while count < 1:
+            if self.NextHeader == 0:
+                temp = Data.nh
+                self.ExtHdr[d][0] = 'Hop By Hop Options'
+                numRows = self.tab3_tableWidget.rowCount()
+                self.tab3_tableWidget.insertRow(numRows)
+                t1 = QtGui.QTableWidgetItem(self.ExtHdr[d][0])
+                self.tab3_tableWidget.setItem(numRows, 0, t1)
+                item = self.tab3_tableWidget.item(numRows, 0)
+                item.setFlags(Qt.Qt.ItemIsSelectable | Qt.Qt.ItemIsEnabled )
+                self.ExtHdr.append(['','',''])
+                d = d + 1
+                if len(Data) == Data.len + 8:
+                    count = 1
+                else:
+                    count = 0
+                Data = Data[2]
+            elif self.NextHeader == 43:
+                temp = Data.nh
+                self.ExtHdr[d][0] = 'Routing'
+                self.ExtHdr[d][1] = Data.addresses
+                numRows = self.tab3_tableWidget.rowCount()
+                self.tab3_tableWidget.insertRow(numRows)
+                t1 = QtGui.QTableWidgetItem(self.ExtHdr[d][0])
+                self.tab3_tableWidget.setItem(numRows, 0, t1)
+                item = self.tab3_tableWidget.item(numRows, 0)
+                item.setFlags(Qt.Qt.ItemIsSelectable | Qt.Qt.ItemIsEnabled )
+                self.ExtHdr.append(['','',''])
+                d = d + 1
+                count = 0
+                Data = Data[1]
+            elif self.NextHeader == 44:
+                temp = Data.nh
+                self.ExtHdr[d][0] = 'Fragmentation'
+                self.ExtHdr[d][1] = Data.id
+                self.ExtHdr[d][2] = Data.m
+                numRows = self.tab3_tableWidget.rowCount()
+                self.tab3_tableWidget.insertRow(numRows)
+                t1 = QtGui.QTableWidgetItem(self.ExtHdr[d][0])
+                self.tab3_tableWidget.setItem(numRows, 0, t1)
+                item = self.tab3_tableWidget.item(numRows, 0)
+                item.setFlags(Qt.Qt.ItemIsSelectable | Qt.Qt.ItemIsEnabled )
+                self.ExtHdr.append(['','',''])
+                d = d + 1
+                count = 0
+                Data = Data[1]
+            elif self.NextHeader == 60:
+                temp = Data.nh
+                self.ExtHdr[d][0] = 'Destination Options'
+                numRows = self.tab3_tableWidget.rowCount()
+                self.tab3_tableWidget.insertRow(numRows)
+                t1 = QtGui.QTableWidgetItem(self.ExtHdr[d][0])
+                self.tab3_tableWidget.setItem(numRows, 0, t1)
+                item = self.tab3_tableWidget.item(numRows, 0)
+                item.setFlags(Qt.Qt.ItemIsSelectable | Qt.Qt.ItemIsEnabled )
+                self.ExtHdr.append(['','',''])
+                d = d + 1
+                if len(Data) == Data.len + 8:
+                    count = 1
+                else:
+                    count = 0
+                Data = Data[2]
+            elif self.NextHeader == 58:
+                self.tab4_comboBox.setCurrentIndex(0)
+                self.NHConf()
+                if Data.type == 128:
+                    self.tab4_Widget_radioButton.setChecked(True)
+                elif Data.type == 134:
+                    self.tab4_Widget_radioButton_2.setChecked(True)
+                    self.RAconf['Prefix'] = Data.prefix
+                    self.RAconf['Prefixlen'] = Data.prefixlen
+                elif Data.type == 2:
+                    self.tab4_Widget_radioButton_3.setChecked(True)
+                count = 1
+            elif self.NextHeader == 6:
+                self.tab4_comboBox.setCurrentIndex(1)
+                self.NHConf()
+                self.tab4_Widget2_lineEdit.setText(str(Data.sport))
+                self.tab4_Widget2_lineEdit_2.setText(str(Data.dport))
+                count = 1
+            elif self.NextHeader == 17:
+                self.tab4_comboBox.setCurrentIndex(2)
+                self.NHConf()
+                self.tab4_Widget3_lineEdit.setText(str(Data.sport))
+                self.tab4_Widget3_lineEdit_2.setText(str(Data.dport))
+                count = 1
+            elif self.NextHeader == 59:
+                self.tab4_comboBox.setCurrentIndex(3)
+                self.NHConf()
+                count = 1
+            else:
+                count = 1
+            self.NextHeader = temp
+
+    def slotSend(self):
+        self.Buildit(0,'')
 
     def slotClose(self):
         """Wird aufgerufen, wenn das Fenster geschlossen wird"""
@@ -590,7 +707,7 @@ class Main(QtGui.QMainWindow):
 ###################
 ## build ip packets
 
-    def Buildit(self):
+    def Buildit(self,Type,File):
 
         ##################
         ## Ethernet Header
@@ -667,7 +784,7 @@ class Main(QtGui.QMainWindow):
         ########################
         ## add the next header
 
-        self.IPv6packet['NextHeader'] = self.BuildICMPv6()
+        self.IPv6packet['NextHeader'] = self.BuildNextHeader()
 
         ############
         ## get iface
@@ -679,15 +796,37 @@ class Main(QtGui.QMainWindow):
             Interface = None
 
         ##########
-        ## send it
+        ## send or save it
 
-        if self.IPv6packet['ExtHeader'] == (None or ''):
-            sendp(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']
-                  /self.IPv6packet['NextHeader'], iface = Interface)
+        if Type == 0:
+            ## send
+            if self.IPv6packet['ExtHeader'] == (None or ''):
+                if self.IPv6packet['NextHeader'] != None:
+                    sendp(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']
+                          /self.IPv6packet['NextHeader'], iface = Interface)
+                else:
+                    sendp(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']
+                          , iface = Interface)
+            else:
+                if self.IPv6packet['NextHeader'] != None:
+                    sendp(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']
+                          /self.IPv6packet['ExtHeader']
+                          /self.IPv6packet['NextHeader'], iface = Interface)
+                else:
+                    sendp(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']
+                          /self.IPv6packet['ExtHeader'], iface = Interface)
         else:
-            sendp(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']
-                  /self.IPv6packet['ExtHeader']/self.IPv6packet['NextHeader'],
-                  iface = Interface)
+            ## save
+            if self.IPv6packet['ExtHeader'] == (None or ''):
+                if self.IPv6packet['NextHeader'] != None:
+                    wrpcap(File, (self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']/self.IPv6packet['NextHeader']))
+                else:
+                    wrpcap(File, (self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']))
+            else:
+                if self.IPv6packet['NextHeader'] != None:
+                    wrpcap(File, (self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']/self.IPv6packet['ExtHeader']/self.IPv6packet['NextHeader']))
+                else:
+                    wrpcap(File, (self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']/self.IPv6packet['ExtHeader']))
 
         if Interface == None:
             self.sourcecode = self.sourcecode
@@ -696,7 +835,7 @@ class Main(QtGui.QMainWindow):
                                ', iface=\''+Interface+'\'')
         
         ## show sourcecode in info_msg:
-
+        #print(self.sourcecode)
         self.sourcecode = ('sendp('+self.sourcecode+')')
         disp_sourcecode = QtGui.QMessageBox.information(None, "Scapy Quellcode", "Scapy Quellcode:\n\n%s" % self.sourcecode )
 
@@ -734,10 +873,10 @@ class Main(QtGui.QMainWindow):
                 else:
                     ExtensionHeader = ExtensionHeader/IPv6ExtHdrRouting(addresses = self.ExtHdr[d][1])
             elif self.ExtHdr[d][0] == 'Fragmentation':
-                if self.ExtHdr[d][2] == True:
+                if self.ExtHdr[d][2] == 0:
                     self.M_Flag = '0'
                     if d == 0:
-                        ExtensionHeader = IPv6ExtHdrFragment(m = 0,
+                        ExtensionHeader = IPv6ExtHdrFragment(m = self.ExtHdr[d][2],
                                                     id = int(self.ExtHdr[d][1]))
                     else:
                         ExtensionHeader = ExtensionHeader/IPv6ExtHdrFragment(m = 0,
@@ -745,7 +884,7 @@ class Main(QtGui.QMainWindow):
                 else:
                     self.M_Flag = '1'
                     if d == 0:
-                        ExtensionHeader = IPv6ExtHdrFragment(m = 1,
+                        ExtensionHeader = IPv6ExtHdrFragment(m = self.ExtHdr[d][2],
                                                     id = int(self.ExtHdr[d][1]))
                     else:
                         ExtensionHeader = ExtensionHeader/IPv6ExtHdrFragment(m = 1,
@@ -758,27 +897,37 @@ class Main(QtGui.QMainWindow):
     ###############
     ## Build ICMPv6
 
-    def BuildICMPv6(self):
+    def BuildNextHeader(self):
 
-        if self.tab3_tab2_radioButton.isChecked():
-            self.ICMP['Type'] = '128'
-            ICMPv6 = self.BuildICMPv6_Ping()
-        elif self.tab3_tab2_radioButton_2.isChecked():
-            self.ICMP['Type'] = '134'
-            ICMPv6 = self.BuildICMPv6_RA()
-        elif self.tab3_tab2_radioButton_3.isChecked():
-            self.ICMP['Type'] = '2'
-            ICMPv6 = self.BuildICMPv6_PacketTooBig()
+        if self.tab4_comboBox.currentText() == 'ICMP':
+            if self.tab4_Widget_radioButton.isChecked():
+                NextHeader = self.BuildICMPv6_Ping()
+            elif self.tab4_Widget_radioButton_2.isChecked():
+                NextHeader = self.BuildICMPv6_RA()
+            elif self.tab4_Widget_radioButton_3.isChecked():
+                NextHeader = self.BuildICMPv6_PacketTooBig()
+        elif self.tab4_comboBox.currentText() == 'TCP':
+            NextHeader = self.BuildTCP()
+        elif self.tab4_comboBox.currentText() == 'UDP':
+            NextHeader = self.BuildUDP()
+        elif self.tab4_comboBox.currentText() == 'No Next Header':
+            NextHeader = self.BuildNoNextHeader()
         else:
-            self.Fehler = QtGui.QMessageBox.information(None, '', 'Sorry ICMPv6 Type %s is not implemented yet.' %self.ICMP['Type'])
+            self.Fehler = QtGui.QMessageBox.information(None, '', 'Sorry this Next Header is not implemented yet.')
 
-        return(ICMPv6)
+        return(NextHeader)
+
+    ## Echo Request
+
+    def BuildICMPv6_Ping(self):
+        self.sourcecode = self.sourcecode+'/ICMPv6EchoRequest()'
+        return(ICMPv6EchoRequest())
 
     ## Router Advertisement
 
     def BuildICMPv6_RA(self):
         ra=ICMPv6ND_RA(chlim=255, H=0L, M=0L, O=1L,
-                       routerlifetime=180, P=0L, retranstimer=0, prf=0L,
+                       routerlifetime=1800, P=0L, retranstimer=0, prf=0L,
                        res=0L)
 
         prefix_info=ICMPv6NDOptPrefixInfo(A=1L, res2=0, res1=0L, L=1L,
@@ -796,7 +945,7 @@ class Main(QtGui.QMainWindow):
 
             self.sourcecode = (self.sourcecode+
                                '/ICMPv6ND_RA(chlim=255, H=0L, M=0L, O=1L, '+
-                               'routerlifetime=180, P=0L, retranstimer=0, '+
+                               'routerlifetime=1800, P=0L, retranstimer=0, '+
                                'prf=0L, res=0L)'+
                                '/ICMPv6NDOptPrefixInfo(A=1L, res2=0, res1=0L, '+
                                'L=1L, len=4, '+
@@ -810,7 +959,7 @@ class Main(QtGui.QMainWindow):
         else:
             self.sourcecode = (self.sourcecode+
                                '/ICMPv6ND_RA(chlim=255, H=0L, M=0L, O=1L, '+
-                               'routerlifetime=180, P=0L, retranstimer=0, '+
+                               'routerlifetime=1800, P=0L, retranstimer=0, '+
                                'prf=0L, res=0L)'+
                                '/ICMPv6NDOptPrefixInfo(A=1L, res2=0, res1=0L, '+
                                'L=1L, len=4, '+
@@ -820,17 +969,11 @@ class Main(QtGui.QMainWindow):
                                'preferredlifetime=604800, type=3)')
             return(ra/prefix_info)
 
-    ## Echo Request
-
-    def BuildICMPv6_Ping(self):
-        self.sourcecode = self.sourcecode+'/ICMPv6EchoRequest()'
-        return(ICMPv6EchoRequest())
-
     ## Packet Too Big
 
     def BuildICMPv6_PacketTooBig(self):
 
-        enMTU = self.tab3_tab2_lineEdit
+        enMTU = self.tab4_Widget_lineEdit
         if enMTU.text() != '':
             MTU = enMTU.text()
         else:
@@ -841,7 +984,7 @@ class Main(QtGui.QMainWindow):
         enPCAP = self.PayloadFile['Capture File']
         if enPCAP != '':
             path = enPCAP
-            capture = rdpcap(path)
+            capture = rdpcap(str(path))
             enPCAPno = self.PayloadFile['Packet No.']
             if enPCAPno != '':
                 no = int(enPCAPno)-1
@@ -851,6 +994,88 @@ class Main(QtGui.QMainWindow):
             self.sourcecode = (self.sourcecode+'/rdpcap(\''+path+'\')['+
                                str(no)+'][IPv6]')
         return(q)
+
+    ## TCP
+
+    def BuildTCP(self):
+        if self.tab4_Widget2_lineEdit.text() != '':
+            SPort=int(self.tab4_Widget2_lineEdit.text())
+        else:
+            self.tab4_Widget2_lineEdit.setText('20')
+            SPort=int(self.tab4_Widget2_lineEdit.text())
+        if self.tab4_Widget2_lineEdit_2.text() != '':
+            DPort=int(self.tab4_Widget2_lineEdit_2.text())
+        else:
+            self.tab4_Widget2_lineEdit_2.setText('80')
+            DPort=int(self.tab4_Widget2_lineEdit_2.text())
+        tcp= TCP(sport=SPort, dport=DPort)
+        self.sourcecode = self.sourcecode+'/TCP(sport='+str(SPort)+' ,dport='+str(DPort)+')'
+        if self.tab4_Widget2_radioButton_4.isChecked():
+            return(tcp)
+        elif self.tab4_Widget2_radioButton.isChecked():
+            load = 'X'*int(self.tab4_Widget2_lineEdit_3.text())
+            self.sourcecode = self.sourcecode+'/\'X\'*'+self.tab4_Widget2_lineEdit_3.text()
+            return(tcp/load)
+        elif self.tab4_Widget2_radioButton_2.isChecked():
+            load = str(self.tab4_Widget2_lineEdit_4.text())
+            self.sourcecode = self.sourcecode+'/\''+self.tab4_Widget2_lineEdit_4.text()+'\''
+            return(tcp/load)
+        elif self.tab4_Widget2_radioButton_3.isChecked():
+            path = self.PayloadFile['Capture File']
+            capture = rdpcap(str(path))
+            PCAPno = self.PayloadFile['Packet No.']
+            if PCAPno != '':
+                no = int(PCAPno)-1
+            else:
+                no = 0
+            load = capture[no][IPv6]
+            self.sourcecode = (self.sourcecode+'/rdpcap(\''+path+'\')['+
+                               str(no)+'][IPv6]')
+            return(tcp/load)
+
+    ## UDP
+
+    def BuildUDP(self):
+        if self.tab4_Widget3_lineEdit.text() != '':
+            SPort=int(self.tab4_Widget3_lineEdit.text())
+        else:
+            self.tab4_Widget3_lineEdit.setText('53')
+            SPort=int(self.tab4_Widget3_lineEdit.text())
+        if self.tab4_Widget3_lineEdit_2.text() != '':
+            DPort=int(self.tab4_Widget3_lineEdit_2.text())
+        else:
+            self.tab4_Widget3_lineEdit_2.setText('53')
+            DPort=int(self.tab4_Widget3_lineEdit_2.text())
+        udp= UDP(sport=SPort, dport=DPort)
+        self.sourcecode = self.sourcecode+'/UDP(sport='+str(SPort)+' ,dport='+str(DPort)+')'
+        if self.tab4_Widget3_radioButton_4.isChecked():
+            return(udp)
+        elif self.tab4_Widget3_radioButton.isChecked():
+            load = 'X' * int(self.tab4_Widget3_lineEdit_3.text())
+            self.sourcecode = self.sourcecode+'/\'X\'*'+self.tab4_Widget3_lineEdit_3.text()
+            return(udp/load)
+        elif self.tab4_Widget3_radioButton_2.isChecked():
+            load = str(self.tab4_Widget3_lineEdit_4.text())
+            self.sourcecode = self.sourcecode+'/\''+self.tab4_Widget3_lineEdit_4.text()+'\''
+            return(udp/load)
+        elif self.tab4_Widget3_radioButton_3.isChecked():
+            path = self.PayloadFile['Capture File']
+            capture = rdpcap(str(path))
+            PCAPno = self.PayloadFile['Packet No.']
+            if PCAPno != '':
+                no = int(PCAPno)-1
+            else:
+                no = 0
+            load = capture[no][IPv6]
+            self.sourcecode = (self.sourcecode+'/rdpcap(\''+path+'\')['+
+                               str(no)+'][IPv6]')
+            return(udp/load)
+
+    ## No Next Header
+
+    def BuildNoNextHeader(self):
+        self.sourcecode = self.sourcecode
+        return(None)
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
