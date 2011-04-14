@@ -239,7 +239,7 @@ class RA(QtGui.QDialog):
         i = len(iflist)
         self.LLSourceAddr.insertItem(0, '')
         for d in range(0, i):
-            self.LLSourceAddr.insertItem(i+1, get_if_hwaddr(iflist[d]))
+            self.LLSourceAddr.addItem(get_if_hwaddr(iflist[d]))
         self.LLSourceAddr.setEditText(self.RAconf['SourceLL'])
 
         self.OKButton = QtGui.QPushButton("OK",self)
@@ -322,7 +322,7 @@ class Main(QtGui.QMainWindow):
         self.tabWidget = QtGui.QTabWidget(self)
         self.tabWidget.setGeometry(QtCore.QRect(0, 30, 600, 300))
 
-	    # Ertes Tab - Ethernet Header
+	    # First Tab - Ethernet Header
         self.tab_EthH = QtGui.QWidget(self.tabWidget)
         self.tabWidget.addTab(self.tab_EthH, "Ethernet Header (optional)")
         self.tab_EthernetHdr_Label = QtGui.QLabel("All fields are optional.", self.tab_EthH)
@@ -341,7 +341,7 @@ class Main(QtGui.QMainWindow):
         self.LLSrcAddr.setGeometry(QtCore.QRect(10, 200, 300, 31))
         self.LLSrcAddr.setEditable(True)
 
-        # Zweites Tab - IPv6 Header
+        # Second Tab - IPv6 Header
         self.tab_IPv6 = QtGui.QWidget(self.tabWidget)
         self.tabWidget.addTab(self.tab_IPv6, "IPv6 Header")
         self.tab_IPv6_Label = QtGui.QLabel("Destination IPv6-address (or name):", self.tab_IPv6)
@@ -351,19 +351,20 @@ class Main(QtGui.QMainWindow):
         self.IPv6_DstAddr = QtGui.QComboBox(self.tab_IPv6)
         self.IPv6_DstAddr.setGeometry(QtCore.QRect(10, 60, 300, 31))
         self.IPv6_DstAddr.setEditable(True)
-        self.IPv6_DstAddr.insertItem(0,'')
-        self.IPv6_DstAddr.insertItem(1,'ff01::1')
-        self.IPv6_DstAddr.insertItem(2,'ff02::1')
-        self.IPv6_DstAddr.insertItem(3,'ff80::1')
-        #self.IPv6_DstAddr.insertItem(4,'2001:0db8:85a3:08d3::1')
+        self.IPv6_DstAddr.addItem('')
+        # add some well known addresses to the the drop-down list
+        self.IPv6_DstAddr.addItem('ff01::1')
+        self.IPv6_DstAddr.addItem('ff02::1')
+        self.IPv6_DstAddr.addItem('ff80::1')
+        #self.IPv6_DstAddr.addItem('2001:0db8:85a3:08d3::1')
         self.IPv6_SrcAddr = QtGui.QComboBox(self.tab_IPv6)
         self.IPv6_SrcAddr.setGeometry(QtCore.QRect(10, 130, 300, 31))
         self.IPv6_SrcAddr.setEditable(True)
-        self.IPv6_SrcAddr.insertItem(0,'')
-        self.IPv6_SrcAddr.insertItem(1,'ff01::1')
-        self.IPv6_SrcAddr.insertItem(2,'ff02::1')
+        self.IPv6_SrcAddr.addItem('')
+        self.IPv6_SrcAddr.addItem('ff01::1')
+        self.IPv6_SrcAddr.addItem('ff02::1')
 
-        # Drittes Tab - Extension Header
+        # Third Tab - Extension Header
         self.tab_ExtHdr = QtGui.QWidget(self.tabWidget)
         self.tabWidget.addTab(self.tab_ExtHdr, "Extension Header")
         self.ExtHdr_tableWidget = QtGui.QTableWidget(0, 1, self.tab_ExtHdr)
@@ -380,7 +381,7 @@ class Main(QtGui.QMainWindow):
         self.connect(self.ExtHdr_EditButton, QtCore.SIGNAL('clicked(bool)'), self.slotEditExtHdr)
         self.connect(self.ExtHdr_DeleteButton, QtCore.SIGNAL('clicked(bool)'), self.slotDeleteExtHdr)
 
-        # Viertes Tab - Next Header
+        # Forth Tab - Next Header
         self.tab_NextHeader = QtGui.QWidget(self.tabWidget)
         self.tabWidget.addTab(self.tab_NextHeader, "Next Header")
         self.NextHeader_Type = QtGui.QComboBox(self.tab_NextHeader)
@@ -439,7 +440,7 @@ class Main(QtGui.QMainWindow):
         self.NH_TCP_Flag_FIN.setAutoExclusive(False)
         self.NH_TCP_Flag_FIN.move(170, 160)
 
-                # TCP Payload
+        # TCP Payload
         self.NH_TCP_Payload = QtGui.QWidget(self.NH_TCP) 
         self.NH_TCP_Payload.setGeometry(QtCore.QRect(300, 0, 300, 200))
         self.NH_TCP_Payload_Label = QtGui.QLabel("Payload:", self.NH_TCP_Payload)
@@ -459,7 +460,7 @@ class Main(QtGui.QMainWindow):
         self.connect(self.NH_TCP_Payload_PcapFile, QtCore.SIGNAL('clicked(bool)'), self.slotPayloadTCP)
         self.NH_TCP_Payload_NoPayload = QtGui.QRadioButton("No Payload", self.NH_TCP_Payload)
         self.NH_TCP_Payload_NoPayload.move(30, 170)
-            # UDP
+        # UDP
         self.NH_UDP = QtGui.QWidget(self.tab_NextHeader)
         self.NH_UDP.setGeometry(QtCore.QRect(0, 60, 600, 250))
         self.NH_UDP.setVisible(False)
@@ -471,7 +472,7 @@ class Main(QtGui.QMainWindow):
         self.NH_UDP_Label_2.move(30, 70)
         self.NH_UDP_DstPort = QtGui.QLineEdit("53", self.NH_UDP)
         self.NH_UDP_DstPort.setGeometry(QtCore.QRect(150, 66, 60, 25))
-                # UDP Payload
+        # UDP Payload
         self.NH_UDP_Payload = QtGui.QWidget(self.NH_UDP) 
         self.NH_UDP_Payload.setGeometry(QtCore.QRect(300, 0, 300, 200))
         self.NH_UDP_Label = QtGui.QLabel("Payload:", self.NH_UDP_Payload)
@@ -491,7 +492,7 @@ class Main(QtGui.QMainWindow):
         self.connect(self.NH_UDP_Payload_PcapFile, QtCore.SIGNAL('clicked(bool)'), self.slotPayloadUDP)
         self.NH_UDP_Payload_NoPayload = QtGui.QRadioButton("No Payload", self.NH_UDP_Payload)
         self.NH_UDP_Payload_NoPayload.move(30, 170)
-            # no Next Header
+        # no Next Header
         self.NH_NoNextHdr = QtGui.QWidget(self.tab_NextHeader)
         self.NH_NoNextHdr.setGeometry(QtCore.QRect(0, 60, 600, 250))
         self.NH_NoNextHdr.setVisible(False)
@@ -509,33 +510,32 @@ class Main(QtGui.QMainWindow):
 
         self.show()
 
-        ## get Interface
+        ## get Interfaces, add them to the drop-down list
         iflist = get_if_list()
         i = 0
-        self.Interface.insertItem(i, '')
+        self.Interface.insertItem(0, '')
         for d in iflist:
-            i = i+1
-            self.Interface.insertItem(i, d)
+            self.Interface.addItem(d)
 
-        ## get SourceLinkLayerAddresses
+        ## get SourceLinkLayerAddresses, add them to the drop-down list
         i = len(iflist)
         self.LLSrcAddr.insertItem(0, '')
         for d in range(0, i):
-            self.LLSrcAddr.insertItem(i+1, get_if_hwaddr(iflist[d]))
+            self.LLSrcAddr.addItem(get_if_hwaddr(iflist[d]))
 
-        ## get IPv6 Addresses
+        ## get IPv6 Addresses, add them to the drop-down list
         ipv6 = read_routes6()
         length_ipv6 = len(ipv6)
         for d in range(0, length_ipv6):
             if ipv6[d][3] == 'lo':
-                self.IPv6_SrcAddr.insertItem(len(self.IPv6_SrcAddr), str(ipv6[d][0]))
-                self.IPv6_DstAddr.insertItem(len(self.IPv6_DstAddr), str(ipv6[d][0]))
+                self.IPv6_SrcAddr.addItem(str(ipv6[d][0]))
+                self.IPv6_DstAddr.addItem(str(ipv6[d][0]))
         for d in range(0, length_ipv6):
             if ipv6[d][2] != '::':
-                self.IPv6_DstAddr.insertItem(len(self.IPv6_DstAddr), str(ipv6[d][2]))
+                self.IPv6_DstAddr.addItem(str(ipv6[d][2]))
         for d in range(0, length_ipv6):
             if ipv6[d][1] != 0 and ipv6[d][1] != 128 and ipv6[d][0] != 'fe80::':
-                self.IPv6_DstAddr.insertItem(len(self.IPv6_DstAddr), str(ipv6[d][0])+'1')
+                self.IPv6_DstAddr.addItem(str(ipv6[d][0])+'1')
 
     def NHConf(self):
         if self.NextHeader_Type.currentText() == 'ICMP':
