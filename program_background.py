@@ -57,9 +57,10 @@ class IPv6Paket:
     indize = 0
     # indize: 0 = ICMP, 1 = TCP, 2 = UDP, 3 = no Next Header
     RAconf = {'Prefix':'fd00:141:64:1::','Prefixlen':'64','RA_LLSrcAddr':'', 'M': False, 'O': False, 'RouterLifeTime':'1800', 'CHLim': '255'}   # Router Advetisement
-    NSconf = {'NS_LLSrcAddr': '::'} # Neighbor Solicitation
+    NSconf = {'NS_LLSrcAddr': ':::::'} # Neighbor Solicitation
+    NAconf = {'NA_tgtAddr': '::', 'R' : True, 'S' : False, 'O' : True} # Neighbor Advertisment
     ICMP = {'indize': 0, 'Code': '1', 'Type': '0', 'Message': ''}
-    # indize: 0 = Ping, 1 = Neighbor Solicitation, 2 = Router Advertisement, 3 = Paket Too Big, 4 = other Type
+    # indize: 0 = Ping, 1 = Router Advertisement, 2 = Router Solicitation, 3 = Neighbor Advertisement, 4 = Neighbor Solicitation, 5 = Paket Too Big, 6 = other Type
     PTB = {'MTU': '1280'} # ICMP Paket too big
     TCP_UDP = {'SrcPort': '20', 'DstPort': '80', 'Flags': 2}
     Payload = {'indizeP': 0, 'Payloadlen': '1', 'PayloadString': 'X', 'Capture File': '', 'Packet No.': '1'}	# Payload information
@@ -70,10 +71,10 @@ class Buildit:
     
     def __init__(self,Type, File, IPv6Paket):
 
-        self.sourcecode = None ## var to display the sourcecode 
         self.IPv6 = IPv6Paket
         self.IPv6packet = {'EthHeader':None,'IPHeader':None,
                            'ExtHeader':None,'NextHeader':None}
+        self.IPv6Scapy = None
 
         ##################
         ## Ethernet Header
@@ -81,30 +82,11 @@ class Buildit:
         self.IPv6packet['EthHeader'] = Ether(dst=self.IPv6.EthHdr['LLDstAddr'],
                                              src=self.IPv6.EthHdr['LLSrcAddr'])
 
-			## sourcecode...
-        if ((self.IPv6.EthHdr['LLDstAddr'] != None ) and (self.IPv6.EthHdr['LLSrcAddr'] != None)):
-            self.sourcecode = ('Ether(dst=\''+str(self.IPv6.EthHdr['LLDstAddr'])+
-                               '\', src=\''+str(self.IPv6.EthHdr['LLSrcAddr'])+'\')')
-        elif (self.IPv6.EthHdr['LLDstAddr'] != None):
-            self.sourcecode = ('Ether(dst=\''+str(self.IPv6.EthHdr['LLDstAddr'])+'\')')
-        elif (self.IPv6.EthHdr['LLSrcAddr'] != None):
-            self.sourcecode = ('Ether(src=\''+str(self.IPv6.EthHdr['LLSrcAddr'])+'\')')
-        elif ((self.IPv6.EthHdr['LLDstAddr'] == None) and (self.IPv6.EthHdr['LLSrcAddr'] == None)):
-            self.sourcecode = ('Ether()')
-
         ##############
         ## IPv6 Header
 
         self.IPv6packet['IPHeader'] = IPv6(dst=self.IPv6.IPHdr['DstIPAddr'],
                                            src=self.IPv6.IPHdr['SrcIPAddr'])
-
-			## sourcecode...
-        if (self.IPv6.IPHdr['SrcIPAddr'] != None):
-            self.sourcecode = (self.sourcecode+'/IPv6(dst=\''+self.IPv6.IPHdr['DstIPAddr']+
-                               '\', src=\''+self.IPv6.IPHdr['SrcIPAddr']+'\')')
-        elif (self.IPv6.IPHdr['SrcIPAddr'] == None):
-            self.sourcecode = (self.sourcecode+'/IPv6(dst=\''+self.IPv6.IPHdr['DstIPAddr']+
-                               '\')')
 
         ############################
         ## add extension header if set
@@ -128,60 +110,35 @@ class Buildit:
         else:
             Interface = None
 
-        ############
-        ## Create Sourcecode
-		
-        x = self.sourcecode
-        if Interface == None:
-            self.sourcecode = self.sourcecode
-        else:
-            self.sourcecode = (self.sourcecode+
-                               ', iface=\''+Interface+'\'')
-
-        self.sourcecode = ('sendp('+self.sourcecode+')')
-
         ##########
         ## send or save (pcap og Clipbord)
 		
+        if self.IPv6packet['ExtHeader'] == (None or '') and self.IPv6packet['NextHeader'] != None:
+            self.IPv6Scapy=(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']/self.IPv6packet['NextHeader'])
+        elif self.IPv6packet['ExtHeader'] == (None or '') and self.IPv6packet['NextHeader'] == None:
+            self.IPv6Scapy=(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader'])
+        elif self.IPv6packet['ExtHeader'] != (None or '') and self.IPv6packet['NextHeader'] != None:
+            self.IPv6Scapy=(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']/self.IPv6packet['ExtHeader']/self.IPv6packet['NextHeader'])
+        elif self.IPv6packet['ExtHeader'] != (None or '') and self.IPv6packet['NextHeader'] == None:
+            self.IPv6Scapy=(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']/self.IPv6packet['ExtHeader'])
+    
+
         if Type == 0:
             ## send
-			
-            if self.IPv6packet['ExtHeader'] == (None or ''):
-                if self.IPv6packet['NextHeader'] != None:
-                    sendp(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']
-                          /self.IPv6packet['NextHeader'], iface = Interface)
-                else:
-                    sendp(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']
-                          , iface = Interface)
-            else:
-                if self.IPv6packet['NextHeader'] != None:
-                    sendp(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']
-                          /self.IPv6packet['ExtHeader']
-                          /self.IPv6packet['NextHeader'], iface = Interface)
-                else:
-                    sendp(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']
-                          /self.IPv6packet['ExtHeader'], iface = Interface)
+            sendp(self.IPv6Scapy, iface = Interface)
+                
         elif Type == 1:
             ## save as .pcap
 			
-            if self.IPv6packet['ExtHeader'] == (None or ''):
-                if self.IPv6packet['NextHeader'] != None:
-                    wrpcap(File, self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']/self.IPv6packet['NextHeader'])
-                else:
-                    wrpcap(File, self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader'])
-            else:
-                if self.IPv6packet['NextHeader'] != None:
-                    wrpcap(File, self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']/self.IPv6packet['ExtHeader']/self.IPv6packet['NextHeader'])
-                else:
-                    wrpcap(File, self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']/self.IPv6packet['ExtHeader'])
+            wrpcap(File, self.IPv6Scapy)
+                
         else:
             ## save to Clipboard
-			
             Clipboard = QtGui.QApplication.clipboard()
-            Clipboard.setText(self.sourcecode)
+            Clipboard.setText(self.IPv6Scapy.command())
 
         ## show sourcecode
-        disp_sourcecode = QtGui.QMessageBox.information(None, "Scapy Quellcode", "Scapy Quellcode:\n\n%s" % self.sourcecode )
+        disp_sourcecode = QtGui.QMessageBox.information(None, "Scapy Quellcode", "Scapy Quellcode:\n\n%s" % self.IPv6Scapy.command() )
 
     ###############
     ## Build Extension Header
@@ -191,26 +148,17 @@ class Buildit:
         ExtensionHeader = ''
         for d in range(Num-1):
             if self.IPv6.ExtHdr[d][0] == 'Hop By Hop Options':
-                self.sourcecode = (self.sourcecode + ' /IPv6ExtHdrHopByHop()')
                 if d == 0:
                     ExtensionHeader = IPv6ExtHdrHopByHop()
                 else:
                     ExtensionHeader = ExtensionHeader/IPv6ExtHdrHopByHop()
             elif self.IPv6.ExtHdr[d][0] == 'Destination Options':
-                self.sourcecode = (self.sourcecode + ' /IPv6ExtHdrDestOpt()')
                 if d == 0:
                     ExtensionHeader = IPv6ExtHdrDestOpt()
                 else:
                     ExtensionHeader = ExtensionHeader/IPv6ExtHdrDestOpt()
             elif self.IPv6.ExtHdr[d][0] == 'Routing':
                 i = len(self.IPv6.ExtHdr[d][1])
-                if (self.IPv6.ExtHdr[d][1][0] != '' or None):
-                    self.sourcecode = (self.sourcecode + ' /IPv6ExtHdrRouting(addresses=[\'' + self.IPv6.ExtHdr[d][1][0])
-                    if i > 1:
-                        for d2 in range(i-1):
-                            self.sourcecode = (self.sourcecode + '\',\'' +
-                                               self.IPv6.ExtHdr[d][1][d2+1])
-                self.sourcecode = (self.sourcecode + '\'])')
                 if d == 0:
                     ExtensionHeader = IPv6ExtHdrRouting(addresses = self.IPv6.ExtHdr[d][1])
                 else:
@@ -228,10 +176,6 @@ class Buildit:
                         ExtensionHeader = IPv6ExtHdrFragment(m = self.IPv6.ExtHdr[d][3], offset = int(self.IPv6.ExtHdr[d][1]), id = int(self.IPv6.ExtHdr[d][2]))
                     else:
                         ExtensionHeader = ExtensionHeader/IPv6ExtHdrFragment(m = 1, offset = int(self.IPv6.ExtHdr[d][1]), id = int(self.IPv6.ExtHdr[d][2]))
-                self.sourcecode = (self.sourcecode + ' /IPv6ExtHdrFragment(m=' + 
-                                  str(self.M_Flag) + ',offset=' + 
-                                  str(self.IPv6.ExtHdr[d][1]) + ',id=' + 
-                                  str(self.IPv6.ExtHdr[d][2]) + ')')
         return(ExtensionHeader)
 
     ###############
@@ -242,13 +186,17 @@ class Buildit:
         if self.IPv6.indize == 0:               # ICMP
             if self.IPv6.ICMP['indize'] == 0:        # Ping
                 NextHeader = self.BuildICMPv6_Ping()
-            elif self.IPv6.ICMP['indize'] == 1:      # Neighbor Solicitation
-                NextHeader = self.BuildICMPv6_NS()
-            elif self.IPv6.ICMP['indize'] == 2:      # Router Advetisement
+            elif self.IPv6.ICMP['indize'] == 1:      # Router Advetisement
                 NextHeader = self.BuildICMPv6_RA()
-            elif self.IPv6.ICMP['indize'] == 3:      # Packet Too Big
+            elif self.IPv6.ICMP['indize'] == 2:      # Router Solicitation
+                NextHeader = self.BuildICMPv6_RS()
+            elif self.IPv6.ICMP['indize'] == 3:      # Neighbor Advetisement
+                NextHeader = self.BuildICMPv6_NA()
+            elif self.IPv6.ICMP['indize'] == 4:      # Neighbor Solicitation
+                NextHeader = self.BuildICMPv6_NS()
+            elif self.IPv6.ICMP['indize'] == 5:      # Packet Too Big
                 NextHeader = self.BuildICMPv6_PacketTooBig()
-            elif self.IPv6.ICMP['indize'] == 4:      # ICMP Unknown
+            elif self.IPv6.ICMP['indize'] == 6:      # ICMP Unknown
                 NextHeader = self.BuildICMPv6_Unknown()
         elif self.IPv6.indize == 1:             # TCP
             NextHeader = self.BuildTCP()
@@ -264,17 +212,13 @@ class Buildit:
     ## Echo Request
 
     def BuildICMPv6_Ping(self):
-        self.sourcecode = self.sourcecode+'/ICMPv6EchoRequest()'
         return(ICMPv6EchoRequest())
 
-    ## Neighbor Solicitation
+    ## Router Solicitation
 
-    def BuildICMPv6_NS(self):
-
-        ns = ICMPv6ND_NS(tgt=self.IPv6.NSconf['NS_LLSrcAddr'])
-        self.sourcecode = (self.sourcecode+'/ICMPv6ND_NS(tgt=\''+self.IPv6.NSconf['NS_LLSrcAddr']+'\')')
-        return(ns)
-
+    def BuildICMPv6_RS(self):
+        rs = ICMPv6ND_RS()
+        return(rs)
 
     ## Router Advertisement
 
@@ -300,34 +244,29 @@ class Buildit:
         if (self.IPv6.RAconf['RA_LLSrcAddr'] != (None or '')):
             llad=ICMPv6NDOptSrcLLAddr(type=1, len=1,
                                       lladdr=str(self.IPv6.RAconf['RA_LLSrcAddr']))
-
-            self.sourcecode = (self.sourcecode+
-                               '/ICMPv6ND_RA(chlim='+self.IPv6.RAconf['CHLim']+', H=0L, M='+
-                               str(MFlag)+', O='+str(OFlag)+', routerlifetime='+
-                               self.IPv6.RAconf['RouterLifeTime']+
-                               ', P=0L, retranstimer=0, prf=0L, res=0L)'+
-                               '/ICMPv6NDOptPrefixInfo(A=1L, res2=0, res1=0L, '+
-                               'L=1L, len=4, '+
-                               'prefix=\''+self.IPv6.RAconf['Prefix']+'\', '+
-                               'R=0L, validlifetime=1814400, '+
-                               'prefixlen='+self.IPv6.RAconf['Prefixlen']+', '+
-                               'preferredlifetime=604800, type=3)'+
-                               '/ICMPv6NDOptSrcLLAddr(type=1, len=1, '+
-                               'lladdr=\''+self.IPv6.RAconf['RA_LLSrcAddr']+'\')')
             return(ra/prefix_info/llad)
         else:
-            self.sourcecode = (self.sourcecode+
-                               '/ICMPv6ND_RA(chlim='+self.IPv6.RAconf['CHLim']+', H=0L, M='+
-                               str(MFlag)+', O='+str(OFlag)+', routerlifetime='+
-                               self.IPv6.RAconf['RouterLifeTime']+
-                               'P=0L, retranstimer=0, prf=0L, res=0L)'+
-                               '/ICMPv6NDOptPrefixInfo(A=1L, res2=0, res1=0L, '+
-                               'L=1L, len=4, '+
-                               'prefix=\''+self.IPv6.RAconf['Prefix']+'\', '+
-                               'R=0L, validlifetime=1814400, '+
-                               'prefixlen='+self.IPv6.RAconf['Prefixlen']+', '+
-                               'preferredlifetime=604800, type=3)')
             return(ra/prefix_info)
+
+    ## Neighbor Solicitation
+
+    def BuildICMPv6_NS(self):
+
+        ns = ICMPv6ND_NS(tgt=str(self.IPv6.NSconf['NS_LLSrcAddr']))
+        return(ns)
+
+    ## Neighbor Advertisment
+
+    def BuildICMPv6_NA(self):
+
+        if self.IPv6.NAconf['R'] == True: RFlag = 1
+        else: RFlag = 0
+        if self.IPv6.NAconf['S'] == True: SFlag = 1
+        else: SFlag = 0
+        if self.IPv6.NAconf['O'] == True: OFlag = 1
+        else: OFlag = 0
+        na = ICMPv6ND_NA(tgt=str(self.IPv6.NAconf['NA_tgtAddr']), R = RFlag, S = SFlag, O = OFlag)
+        return(na)
 
     ## Packet Too Big
 
@@ -338,7 +277,6 @@ class Buildit:
         else:
             MTU = None
         q = ICMPv6PacketTooBig(mtu=int(MTU))
-        self.sourcecode = self.sourcecode+' /ICMPv6PacketTooBig(mtu='+MTU+')'
 
         if self.IPv6.Payload['Capture File'] != '':
             path = self.IPv6.Payload['Capture File']
@@ -349,8 +287,6 @@ class Buildit:
             else:
                 no = 0
             q = q/capture[no][IPv6]
-            self.sourcecode = (self.sourcecode+' /rdpcap(\''+path+'\')['+
-                               str(no)+'][IPv6]')
         return(q)
 
     ## ICMP Unknown
@@ -358,7 +294,6 @@ class Buildit:
     def BuildICMPv6_Unknown(self):
 
         q = ICMPv6Unknown(type=int(self.IPv6.ICMP['Type']), code=int(self.IPv6.ICMP['Code']), msgbody=self.IPv6.ICMP['Message'])
-        self.sourcecode = self.sourcecode+' /ICMPv6Unknown(type='+self.IPv6.ICMP['Type']+',code='+self.IPv6.ICMP['Code']+',msgbody=\''+self.IPv6.ICMP['Message']+'\')'
         return(q)
 
     ## TCP
@@ -367,7 +302,6 @@ class Buildit:
         SPort=int(self.IPv6.TCP_UDP['SrcPort'])
         DPort=int(self.IPv6.TCP_UDP['DstPort'])
         tcp= TCP(sport=SPort, dport=DPort, flags=self.IPv6.TCP_UDP['Flags'])
-        self.sourcecode = self.sourcecode+'/TCP(sport='+str(SPort)+', dport='+str(DPort)+', flags='+str(self.IPv6.TCP_UDP['Flags'])+')'
         tcp = self.BuildPayload(tcp)
         return(tcp)
 
@@ -377,14 +311,12 @@ class Buildit:
         SPort=int(self.IPv6.TCP_UDP['SrcPort'])
         DPort=int(self.IPv6.TCP_UDP['DstPort'])
         udp= UDP(sport=SPort, dport=DPort)
-        self.sourcecode = self.sourcecode+'/UDP(sport='+str(SPort)+' ,dport='+str(DPort)+')'
         udp = self.BuildPayload(udp)
         return(udp)
 
     ## No Next Header
 
     def BuildNoNextHeader(self):
-        self.sourcecode = self.sourcecode
         return(None)
 
     ## Payload
@@ -394,11 +326,9 @@ class Buildit:
             return(x)
         elif self.IPv6.Payload['indizeP'] == 0:
             load = 'X'*int(self.IPv6.Payload['Payloadlen'])
-            self.sourcecode = self.sourcecode+'/\'X\'*'+self.IPv6.Payload['Payloadlen']
             return(x/load)
         elif self.IPv6.Payload['indizeP'] == 1:
             load = str(self.IPv6.Payload['PayloadString'])
-            self.sourcecode = self.sourcecode+'/\''+self.IPv6.Payload['PayloadString']+'\''
             return(x/load)
         elif self.IPv6.Payload['indizeP'] == 2:
             path = self.IPv6.Payload['Capture File']
@@ -409,6 +339,4 @@ class Buildit:
             else:
                 no = 0
             load = capture[no][Raw]
-            self.sourcecode = (self.sourcecode+' /rdpcap(\''+path+'\')['+
-                               str(no)+'][Raw]')
             return(x/load)

@@ -97,10 +97,14 @@ class EH(QtGui.QDialog):
         self.FragmentHdr_Label.move(5, 10)
         self.FragmentHdr_FragOffset = QtGui.QLineEdit('0', self.FragmentHdr)
         self.FragmentHdr_FragOffset.setGeometry(QtCore.QRect(10, 35, 300, 31))
+        self.FragmentHdr_FragOffset.setInputMask('9999')
+        self.connect(self.FragmentHdr_FragOffset, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_13)
         self.FragmentHdr_Label_2 = QtGui.QLabel("Identification:", self.FragmentHdr)
         self.FragmentHdr_Label_2.move(5, 80)
         self.FragmentHdr_ID = QtGui.QLineEdit('0', self.FragmentHdr)
         self.FragmentHdr_ID.setGeometry(QtCore.QRect(10, 105, 300, 30))
+        self.FragmentHdr_ID.setInputMask('9999999999')
+        self.connect(self.FragmentHdr_ID, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_32)
         self.FragmentHdr_M = QtGui.QCheckBox("Last Package", self.FragmentHdr)
         self.FragmentHdr_M.move(10, 160)
         
@@ -205,6 +209,14 @@ class EH(QtGui.QDialog):
                 self.ExtHdr[3] = 1
         self.accept()
 
+    def slotMax2_32(self):
+        if int(self.FragmentHdr_ID.text()) >= 4294967296: 
+            self.FragmentHdr_ID.setText('4294967295')
+
+    def slotMax2_13(self):
+        if int(self.FragmentHdr_FragOffset.text()) >= 8192: 
+            self.FragmentHdr_FragOffset.setText('8191')
+
 class NS(QtGui.QDialog):
     """Neighbor Solicitation"""
     def __init__(self,NSconf):
@@ -214,7 +226,10 @@ class NS(QtGui.QDialog):
         self.NSconf = NSconf
         self.Label_5 = QtGui.QLabel("ICMPv6 Source Link-Layer-Address:", self)
         self.Label_5.move(5, 10)
+        self.LLSrcAddr_help = QtGui.QLineEdit(self)
+        self.LLSrcAddr_help.setInputMask('HH:HH:HH:HH:HH:HH')
         self.LLSrcAddr = QtGui.QComboBox(self)
+        self.LLSrcAddr.setLineEdit(self.LLSrcAddr_help)
         self.LLSrcAddr.setGeometry(QtCore.QRect(10, 35, 300, 30))
         self.LLSrcAddr.setEditable(True)
 
@@ -237,6 +252,56 @@ class NS(QtGui.QDialog):
         if self.NSconf['NS_LLSrcAddr'] == '': self.NSconf['NS_LLSrcAddr'] = '::'
         self.accept()
 
+class NA(QtGui.QDialog):
+    """Neighbor Advertisment"""
+    def __init__(self,NAconf):
+        QtGui.QDialog.__init__(self)
+        self.setWindowTitle("Neighbor Advertisement")
+        self.resize(320, 220)
+        self.NAconf = NAconf
+        self.Label_5 = QtGui.QLabel("Target Address:", self)
+        self.Label_5.move(5, 10)
+        self.tgtAddr = QtGui.QComboBox(self)
+        self.tgtAddr.setGeometry(QtCore.QRect(10, 35, 300, 30))
+        self.tgtAddr.setEditable(True)
+        self.tgtAddr.addItem('')
+        self.tgtAddr.addItem('ff01::1')
+        self.tgtAddr.addItem('ff02::1')
+        self.tgtAddr.addItem('ff80::1')
+        self.RFlag = QtGui.QCheckBox("Router - flag", self)
+        self.RFlag.move(10, 80)
+        self.RFlag.setChecked(self.NAconf['R'])
+        self.SFlag = QtGui.QCheckBox("Solicited - flag", self)
+        self.SFlag.move(10, 100)
+        self.SFlag.setChecked(self.NAconf['S'])
+        self.OFlag = QtGui.QCheckBox("Override - flag", self)
+        self.OFlag.move(10, 120)
+        self.OFlag.setChecked(self.NAconf['O'])
+        
+        ## get IPv6 Dst-Addresses, add them to the drop-down list
+        ipv6 = read_routes6()
+        length_ipv6 = len(ipv6)
+        for d in range(0, length_ipv6):
+            if ipv6[d][2] != '::':
+                self.tgtAddr.addItem(str(ipv6[d][2]))
+        for d in range(0, length_ipv6):
+            if ipv6[d][1] != 0 and ipv6[d][1] != 128 and ipv6[d][0] != 'fe80::':
+                self.tgtAddr.addItem(str(ipv6[d][0])+'1')
+
+        self.OKButton = QtGui.QPushButton("OK",self)
+        self.OKButton.setGeometry(QtCore.QRect(111, 180, 98, 27))
+        self.connect(self.OKButton, QtCore.SIGNAL('clicked()'), self.fertig)
+        self.show()
+
+    def fertig(self):
+        
+        self.NAconf['NA_tgtAddr'] = self.tgtAddr.currentText()
+        if self.NAconf['NA_tgtAddr'] == '': self.NAconf['NA_tgtAddr'] = ':::::'
+        self.NAconf['R'] = self.RFlag.isChecked()
+        self.NAconf['S'] = self.SFlag.isChecked()
+        self.NAconf['O'] = self.OFlag.isChecked()  
+        self.accept()
+
 class RA(QtGui.QDialog):
     """Router Advertisement"""
     def __init__(self,RAconf):
@@ -254,6 +319,8 @@ class RA(QtGui.QDialog):
         self.PrefixLen = QtGui.QLineEdit(self)
         self.PrefixLen.setGeometry(QtCore.QRect(210, 40, 60, 25)) 
         self.PrefixLen.setText(self.RAconf['Prefixlen'])
+        self.PrefixLen.setInputMask('999')
+        self.connect(self.PrefixLen, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_7)
         self.MFlag = QtGui.QCheckBox("Managed address configuration - flag", self)
         self.MFlag.move(10, 150)
         self.MFlag.setChecked(self.RAconf['M'])
@@ -265,13 +332,16 @@ class RA(QtGui.QDialog):
         self.CHLim = QtGui.QLineEdit(self)
         self.CHLim.setGeometry(QtCore.QRect(10, 105, 60, 25))
         self.CHLim.setText(self.RAconf['CHLim'])
+        self.CHLim.setInputMask('999')
+        self.connect(self.CHLim, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_8)
         self.Label_4 = QtGui.QLabel("Router Life Time:", self)
         self.Label_4.move(155, 80)
         self.RouterLifeTime = QtGui.QLineEdit(self)
         self.RouterLifeTime.setGeometry(QtCore.QRect(160, 105, 60, 25))
         self.RouterLifeTime.setText(self.RAconf['RouterLifeTime'])
-
-        
+        self.RouterLifeTime.setInputMask('99999')
+        self.connect(self.RouterLifeTime, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_16)
+       
         self.line = QtGui.QFrame(self)
         self.line.setGeometry(QtCore.QRect(5, 200, 310, 2))
         self.line.setFrameShape(QtGui.QFrame.HLine)
@@ -281,8 +351,11 @@ class RA(QtGui.QDialog):
         self.Label_5.move(125, 210)
         self.Label_6 = QtGui.QLabel("ICMPv6 Option (Source Link-Layer-Address):", self)
         self.Label_6.move(5, 240)
+        self.LLSrcAddr_help = QtGui.QLineEdit(self)
+        self.LLSrcAddr_help.setInputMask('HH:HH:HH:HH:HH:HH')
         self.LLSrcAddr = QtGui.QComboBox(self)
         self.LLSrcAddr.setGeometry(QtCore.QRect(10, 265, 300, 30))
+        self.LLSrcAddr.setLineEdit(self.LLSrcAddr_help)
         self.LLSrcAddr.setEditable(True)
 
         ## init cbSrcLLaddr
@@ -313,9 +386,22 @@ class RA(QtGui.QDialog):
         self.RAconf['RouterLifeTime'] = self.RouterLifeTime.text()
         if self.RAconf['RouterLifeTime'] == '': self.RAconf['RouterLifeTime'] = '1800'
         self.RAconf['RA_LLSrcAddr'] = self.LLSrcAddr.currentText()
+        if self.RAconf['RA_LLSrcAddr'] == ':::::': self.RAconf['RA_LLSrcAddr'] = ''
         self.RAconf['M'] = self.MFlag.isChecked()
         self.RAconf['O'] = self.OFlag.isChecked()  
         self.accept()
+
+    def slotMax2_16(self):
+        if int(self.RouterLifeTime.text()) >= 65536: 
+            self.RouterLifeTime.setText('65535')
+
+    def slotMax2_8(self):
+        if int(self.CHLim.text()) >= 256: 
+            self.CHLim.setText('255')
+
+    def slotMax2_7(self):
+        if int(self.PrefixLen.text()) >= 129: 
+            self.PrefixLen.setText('128')
 
 class Payload(QtGui.QDialog):
     """Load Pcap Data"""
