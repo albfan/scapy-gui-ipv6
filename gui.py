@@ -40,8 +40,8 @@
 ##                                                                      #
 #########################################################################
 ##                                                                      #
-## Version: 1.3                                                         #
-## Date:    31.03.2011                                                  #
+## Version: 1.4                                                         #
+## Date:    26.08.2011                                                  #
 ##                                                                      #
 #########################################################################
 
@@ -51,9 +51,7 @@ from scapy.all import *
 import program_background
 import program_help_gui
 
-
 class Main(QtGui.QMainWindow):
-
     def __init__(self):
         QtGui.QMainWindow.__init__(self)
         self.setWindowTitle("Scapy GUI")
@@ -61,6 +59,7 @@ class Main(QtGui.QMainWindow):
         self.makeActions()
         self.makeMenu()
 
+        self.IPv6DstList = QtCore.QStringList()
         self.IPv6 = program_background.IPv6Paket()
 
         # TabWidget
@@ -101,11 +100,17 @@ class Main(QtGui.QMainWindow):
         self.IPv6_DstAddr = QtGui.QComboBox(self.tab_IPv6)
         self.IPv6_DstAddr.setGeometry(QtCore.QRect(10, 60, 300, 31))
         self.IPv6_DstAddr.setEditable(True)
+        self.IPv6_DstAddr.setDuplicatesEnabled(True)
         self.IPv6_DstAddr.addItem('')
         self.IPv6_DstAddr.addItem('ff01::1')
         self.IPv6_DstAddr.addItem('ff02::1')
         self.IPv6_DstAddr.addItem('ff80::1')
-        #self.IPv6_DstAddr.addItem('2001:0db8:85a3:08d3::1')
+        self.IPv6DstList.append('')
+        self.IPv6DstList.append('ff01::1')
+        self.IPv6DstList.append('ff02::1')
+        self.IPv6DstList.append('ff80::1')
+        self.IPv6DstList.append('fe80::1')
+        self.IPv6DstList.append('::1')
         self.IPv6_SrcAddr = QtGui.QComboBox(self.tab_IPv6)
         self.IPv6_SrcAddr.setGeometry(QtCore.QRect(10, 130, 300, 31))
         self.IPv6_SrcAddr.setEditable(True)
@@ -308,19 +313,24 @@ class Main(QtGui.QMainWindow):
         for d in range(0, length_ipv6):
             if ipv6[d][3] == 'lo':
                 self.IPv6_SrcAddr.addItem(str(ipv6[d][0]))
-                #self.IPv6_DstAddr.addItem(str(ipv6[d][0])) <-- fehler beim Erstellen 
         for d in range(0, length_ipv6):
-            if ipv6[d][2] != '::':
+            if ipv6[d][2] != '::' and self.IPv6DstList.contains(ipv6[d][2]) == False:
                 self.IPv6_DstAddr.addItem(str(ipv6[d][2]))
+                self.IPv6DstList.append(str(ipv6[d][2]))
         for d in range(0, length_ipv6):
-            if ipv6[d][1] != 0 and ipv6[d][1] != 128 and ipv6[d][0] != 'fe80::':
+            if ipv6[d][1] != (0 or 128) and self.IPv6DstList.contains(str(ipv6[d][0])+'1') == False:
                 self.IPv6_DstAddr.addItem(str(ipv6[d][0])+'1')
+                self.IPv6DstList.append(str(ipv6[d][0])+'1')
 
     def slotMax2_32(self):
+        """Diese Fuktion setzt den maximalen Wert eines Line Edit Widget auf 4294967296 (2^32 - 1).
+        """
         if int(self.NH_ICMP_MTU.text()) >= 4294967296: 
             self.NH_ICMP_MTU.setText('4294967295')
 
     def slotMax2_8(self):
+        """Diese Fuktion setzt den maximalen Wert einiger Line Edit Widget auf 255 (2^8 - 1).
+        """
         if int(self.NH_ICMP_Type.text()) >= 256: 
             self.NH_ICMP_Type.setText('255')
         if int(self.NH_ICMP_Code.text()) >= 256: 
@@ -349,19 +359,30 @@ class Main(QtGui.QMainWindow):
             self.NH_NoNextHdr.setVisible(True)
 
     def makeActions(self):
+        """In dieser Fuktion werden Aktionen mit der Menubar verknüpft.
+        """
         self._saveAction = QtGui.QAction("&Save", None)
         self._loadAction = QtGui.QAction("&Load", None)
         self._exitAction = QtGui.QAction("&Exit", None)
+        self._getIPv6AddrAction = QtGui.QAction("&Get lokal IPv6 Addresses", None)
+        self._RoundTripAction = QtGui.QAction("&Round-Trip Time", None)
         self.connect(self._saveAction, QtCore.SIGNAL('triggered()'), self.slotSave)
         self.connect(self._loadAction, QtCore.SIGNAL('triggered()'), self.slotLoad)
         self.connect(self._exitAction, QtCore.SIGNAL('triggered()'), self.slotClose)
+        self.connect(self._getIPv6AddrAction, QtCore.SIGNAL('triggered()'), self.slotGetIPv6Addr)
+        self.connect(self._RoundTripAction, QtCore.SIGNAL('triggered()'), self.slotRoundTrip)
 
     def makeMenu(self):
+        """Diese Fuktion erstellt die Menubar.
+        """
         menuBar = self.menuBar()
         fileMenu = menuBar.addMenu("&File")
         fileMenu.addAction(self._saveAction)
         fileMenu.addAction(self._loadAction)
         fileMenu.addAction(self._exitAction)
+        toolMenu = menuBar.addMenu("&Tool")
+        toolMenu.addAction(self._getIPv6AddrAction)
+        toolMenu.addAction(self._RoundTripAction)
 
     def slotAddExtHdr(self):
         """Ruft die Einstellung der Extension Header auf"""
@@ -402,21 +423,21 @@ class Main(QtGui.QMainWindow):
             self.ExtHdr_tableWidget.setCurrentCell(Row,0)
 
     def slotRouterAdvertisement(self):
-        """Ruft die Router Advertisement auf"""
+        """Ruft ein Fenster für Router Advertisement auf"""
         self.setEnabled(False)
         ra = program_help_gui.RA(self.IPv6.RAconf)
         ra.exec_()
         self.setEnabled(True)
 
     def slotNeighborSo(self):
-        """Ruft die Neighbor Solicitation auf"""
+        """Ruft ein Fenster für Neighbor Solicitation auf"""
         self.setEnabled(False)
         ns = program_help_gui.NS(self.IPv6.NSconf)
         ns.exec_()
         self.setEnabled(True)
 
     def slotNeighborAd(self):
-        """Ruft die Neighbor Advertisment auf"""
+        """Ruft ein Fenster für Neighbor Advertisment auf"""
         self.setEnabled(False)
         na = program_help_gui.NA(self.IPv6.NAconf)
         na.exec_()
@@ -433,6 +454,32 @@ class Main(QtGui.QMainWindow):
             self.NH_UDP_Payload_XLength.setChecked(True)
             self.NH_ICMP_Ping.setChecked(True)
         self.setEnabled(True)
+
+    def slotGetIPv6Addr(self):
+        """Diese Funktion enthält ein Werkzeug, mit dessen Hilfe die lokalen IPv6 Addressen ermittelt und in die entsprechende ComboBox hizugefügt werden."""
+        addresses=[]
+        request = Ether()/IPv6(dst='ff02::1')/ICMPv6EchoRequest()
+        ans, unans = srp(request, multi = 1, timeout = 10)
+        query = Ether()/IPv6(dst='ff02::1',hlim=1)/IPv6ExtHdrHopByHop(autopad=0,nh=58)/ICMPv6MLQuery()
+        query[2].options='\x05\x02\x00\x00\x00\x00'
+        sendp(query)
+        ans2 = sniff(filter='ip6[48]=131', timeout=10)
+        if ans != None:
+            for paket in ans:
+                addresses.append(paket[1][IPv6].src)
+        if ans2 != None:
+            for paket in ans2:
+                addresses.append(paket[IPv6].src)
+        uniqueAddr = set(addresses)
+        for address in uniqueAddr:
+            if self.IPv6DstList.contains(address) == False:
+                self.IPv6_DstAddr.addItem(str(address)) 
+                self.IPv6DstList.append(str(address))
+
+    def slotRoundTrip(self):
+        """Diese Funktion öffnet ein Werkzeug, mit dessen Hilfe ein Ping mit TCP erzeugt und die benötigte Zeit angegeben wird"""
+        RoundTrip = program_help_gui.RoundTrip(self.IPv6DstList)
+        RoundTrip.exec_()
 
     def slotSave(self):
         """Wird aufgerufen, um alle eingestellten Daten zu speichern."""
@@ -587,9 +634,11 @@ class Main(QtGui.QMainWindow):
             self.NextHeader = temp
 
     def slotSend(self):
+        """Wird aufgerufen, um alle eingestellten Daten zu senden."""
         self.creatIPv6(0, '')
 
     def slotClipboard(self):
+        """Wird aufgerufen, um alle eingestellten Daten in den Zwischenspeicher zu speichern."""
         self.creatIPv6(2, '')
 
     def slotClose(self):
@@ -598,8 +647,10 @@ class Main(QtGui.QMainWindow):
         if ret == QtGui.QMessageBox.Yes:
             self.close()
 
-    def creatIPv6(self, Type, File):
-        """Erstellen des IPv6 Paketes in einer Datei für spätere Weiterverarbeitung."""
+    def creatIPv6(self, Option, File):
+        """Erstellen des IPv6 Paketes in einer Datei für spätere Weiterverarbeitung und 
+        ruft die Funktion :class:`Buildit` auf.
+        """
         self.IPv6.EthHdr['LLDstAddr'] = str(self.LLDstAddr.text())
         self.IPv6.EthHdr['LLSrcAddr'] = str(self.LLSrcAddr.currentText())
         self.IPv6.EthHdr['Interface'] = str(self.Interface.currentText())
@@ -611,7 +662,6 @@ class Main(QtGui.QMainWindow):
         if self.IPv6.IPHdr['DstIPAddr'] == '':
             self.err_msg = QtGui.QMessageBox.information(None, "Info!", "Destination Address is requiered\nto create a valid package!")
             return
-        
         if self.NextHeader_Type.currentText() == 'ICMP':
             self.IPv6.indize = 0
             if self.NH_ICMP_Ping.isChecked():
@@ -683,7 +733,7 @@ class Main(QtGui.QMainWindow):
         elif self.NextHeader_Type.currentText() == 'No Next Header':
             self.IPv6.indize = 3
 
-        program_background.Buildit(Type, File, self.IPv6)
+        program_background.Buildit(Option, File, self.IPv6)
 
 
 

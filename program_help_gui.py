@@ -40,14 +40,15 @@
 ##                                                                      #
 #########################################################################
 ##                                                                      #
-## Version: 1.3                                                         #
-## Date:    31.03.2011                                                  #
+## Version: 1.4                                                         #
+## Date:    26.08.2011                                                  #
 ##                                                                      #
 #########################################################################
 
 import sys
 from PyQt4 import QtCore, QtGui, Qt
 from scapy.all import *
+import thread
 
 class EH(QtGui.QDialog):
     """Extension Header"""
@@ -210,10 +211,14 @@ class EH(QtGui.QDialog):
         self.accept()
 
     def slotMax2_32(self):
+        """Diese Fuktion setzt den maximalen Wert eines Line Edit Widget auf 4294967296 (2^32 - 1).
+        """
         if int(self.FragmentHdr_ID.text()) >= 4294967296: 
             self.FragmentHdr_ID.setText('4294967295')
 
     def slotMax2_13(self):
+        """Diese Fuktion setzt den maximalen Wert eines Line Edit Widget auf 8191 (2^13 - 1).
+        """
         if int(self.FragmentHdr_FragOffset.text()) >= 8192: 
             self.FragmentHdr_FragOffset.setText('8191')
 
@@ -224,8 +229,8 @@ class NS(QtGui.QDialog):
         self.setWindowTitle("Neighbor Solicitation")
         self.resize(320, 120)
         self.NSconf = NSconf
-        self.Label_5 = QtGui.QLabel("ICMPv6 Source Link-Layer-Address:", self)
-        self.Label_5.move(5, 10)
+        self.Label = QtGui.QLabel("ICMPv6 Source Link-Layer-Address:", self)
+        self.Label.move(5, 10)
         self.LLSrcAddr_help = QtGui.QLineEdit(self)
         self.LLSrcAddr_help.setInputMask('HH:HH:HH:HH:HH:HH')
         self.LLSrcAddr = QtGui.QComboBox(self)
@@ -259,8 +264,8 @@ class NA(QtGui.QDialog):
         self.setWindowTitle("Neighbor Advertisement")
         self.resize(320, 220)
         self.NAconf = NAconf
-        self.Label_5 = QtGui.QLabel("Target Address:", self)
-        self.Label_5.move(5, 10)
+        self.Label = QtGui.QLabel("Target Address:", self)
+        self.Label.move(5, 10)
         self.tgtAddr = QtGui.QComboBox(self)
         self.tgtAddr.setGeometry(QtCore.QRect(10, 35, 300, 30))
         self.tgtAddr.setEditable(True)
@@ -392,14 +397,20 @@ class RA(QtGui.QDialog):
         self.accept()
 
     def slotMax2_16(self):
+        """Diese Fuktion setzt den maximalen Wert eines Line Edit Widget auf 65535 (2^16 - 1).
+        """
         if int(self.RouterLifeTime.text()) >= 65536: 
             self.RouterLifeTime.setText('65535')
 
     def slotMax2_8(self):
+        """Diese Fuktion setzt den maximalen Wert eines Line Edit Widget auf 255 (2^8 - 1).
+        """
         if int(self.CHLim.text()) >= 256: 
             self.CHLim.setText('255')
 
     def slotMax2_7(self):
+        """Diese Fuktion setzt den maximalen Wert eines Line Edit Widget auf 128 (2^7).
+        """
         if int(self.PrefixLen.text()) >= 129: 
             self.PrefixLen.setText('128')
 
@@ -407,7 +418,6 @@ class Payload(QtGui.QDialog):
     """Load Pcap Data"""
     def __init__(self,PayloadFile):
         QtGui.QDialog.__init__(self)
-
         self.setWindowTitle("Payload")
         self.resize(420, 200)
         self.PayloadFile = PayloadFile
@@ -434,10 +444,81 @@ class Payload(QtGui.QDialog):
 
     def ask_for_filename(self):
         self.fileDialog = QtGui.QFileDialog.getOpenFileName(self,"FileDialog")
-	self.PacketFile.setText(self.fileDialog)
+        self.PacketFile.setText(self.fileDialog)
  
     def fertig(self):
         self.PayloadFile['Capture File'] = self.PacketFile.text()
         self.PayloadFile['Packet No.'] = self.PacketNo.text()
         
         self.accept()
+
+class RoundTrip(QtGui.QDialog):
+    """Round-Trip Time"""
+    def __init__(self,DstAdd):
+        QtGui.QDialog.__init__(self)
+        self.setWindowTitle("TCP Ping")
+        self.resize(320, 180)
+        self.Label = QtGui.QLabel("IPv6 Destination Address:", self)
+        self.Label.move(5, 10)
+        self.IPv6_DstAddr = QtGui.QComboBox(self)
+        self.IPv6_DstAddr.setGeometry(QtCore.QRect(10, 35, 300, 30))
+        self.IPv6_DstAddr.setEditable(True)
+        self.Label_3 = QtGui.QLabel("Paket Count:", self)
+        self.Label_3.move(5, 110)
+        self.pktcount = QtGui.QLineEdit("3", self)
+        self.pktcount.setGeometry(QtCore.QRect(125, 106, 60, 25))
+        self.pktcount.setInputMask('9')
+        
+
+        ## init Dst Add
+        
+        i = len(DstAdd)
+        for d in range(0, i):
+            if DstAdd[d] != ('::1' or 'fe80::1'):
+                self.IPv6_DstAddr.addItem(DstAdd[d])
+
+        self.PingButton = QtGui.QPushButton("Ping",self)
+        self.PingButton.setGeometry(QtCore.QRect(50, 140, 98, 27))
+        self.connect(self.PingButton, QtCore.SIGNAL('clicked()'), self.SendPing)
+        self.CloseButton = QtGui.QPushButton("Close",self)
+        self.CloseButton.setGeometry(QtCore.QRect(152, 140, 98, 27))
+        self.connect(self.CloseButton, QtCore.SIGNAL('clicked()'), self.Close)
+
+        self.show()
+
+    def SendPing(self):
+        
+        if self.pktcount.text() == ('' or '0'):
+            self.pktcount.setText('5')
+        thread.start_new_thread(self.Ping, (self.pktcount.text(), ))
+        ans = sniff(filter='ip6', timeout=int(self.pktcount.text()))
+        request = []
+        reply = []
+        for paket in ans:
+            if paket[IPv6].type == 128:
+                request.append(paket)
+            if paket[IPv6].type == 129:
+                reply.append(paket)
+        if reply == None:
+            info = 'Host is down'
+        else:
+            if len(request) == len(reply) and len(reply) == int(self.pktcount.text()):
+                d = 0
+                timediff = []
+                timediffstr = ''
+                while d < len(request):
+                    timediff.append((reply[d].time - request[d].time)*1000)
+                    timediffstr = timediffstr + str((reply[d].time - request[d].time)*1000)+' ms\n'
+                    d += 1
+                info = 'The Round-Trip Time of the individual pings are: \n'+timediffstr+'\nThe mean Time is '+ str(sum(timediff)/int(self.pktcount.text())) +' ms.'
+            else:
+                info = 'One or more replies are missing or Scapy cannot send all Pakets!'
+        self.msg = QtGui.QMessageBox.information(None, "Result!", info)
+
+    def Ping(self, pktcount):  
+        waittime = .1  
+        ping = IPv6(dst=str(self.IPv6_DstAddr.currentText()))/ICMPv6EchoRequest()     
+        ans = srloop(ping, timeout = waittime, count=int(pktcount))
+
+    def Close(self):
+        self.close()

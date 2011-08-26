@@ -40,8 +40,8 @@
 ##                                                                      #
 #########################################################################
 ##                                                                      #
-## Version: 1.3                                                         #
-## Date:    31.03.2011                                                  #
+## Version: 1.4                                                         #
+## Date:    26.08.2011                                                  #
 ##                                                                      #
 #########################################################################
 
@@ -50,26 +50,102 @@ from PyQt4 import QtCore, QtGui, Qt
 from scapy.all import *
 
 class IPv6Paket:
+    """Dient dem Erstellen eines IPv6 Arrays, welches notwenige Informationen zur Packertgenerierung enthält.
 
+    Es werden nie alle Werte benötigt.
+
+    :returns: -- EthHdr -- Ethernet Header (link-layer source address, -destination address, Interface)
+
+              -- IPHdr  -- IPv6 Header (source and destination IPv6 address)
+
+              -- indize -- int Wert zur Erkennung des Next Headers:: 
+
+                        0 = ICMP
+                        1 = TCP
+                        2 = UDP
+                        3 = no Next Header
+
+              -- RAconf -- Router Advertisement (Prefix, Prefix Length, link-layer source address, M and O Flag, Router Life Time, Cur Hop Limit)
+
+              -- NAconf -- Neighbor Advertisement (Target IPv6 address, Flags)
+
+              -- NSconf -- Neighbor Solicitation (link-layer source address)
+
+              -- ICMP   -- Internet Control Message Protocol (Code, Type, Message, indize)
+                            -- indize -- int Wert zur Erkennung des ICMP Types:: 
+
+                                0 = Ping
+                                1 = Router Advertisement
+                                2 = Router Solicitation 
+                                3 = Neighbor Advertisement
+                                4 = Neighbor Solicitation
+                                5 = Paket Too Big
+                                6 = other Type
+
+              -- PTB    -- ICMP Paket too big (MTU)
+
+              -- TCP_UDP -- Transmission Control and User Datagram Protocol (source and destination Port, TCP-Flags)
+
+              -- Payload -- Payload Info (Payload Length, Payload String, Capture File, File no., indizeP )
+                            -- indizeP -- int Wert zur Erkennung der Payload Variante::
+
+                                0 = String wiht 'X' * len
+                                1 = String
+                                2 = pcap File
+                                3 = no Payload
+    
+    """
     EthHdr = {'LLSrcAddr': None, 'LLDstAddr': None, 'Interface': None}
     IPHdr = {'SrcIPAddr': None, 'DstIPAddr': None}
     ExtHdr = [['','','','']]
     indize = 0
-    # indize: 0 = ICMP, 1 = TCP, 2 = UDP, 3 = no Next Header
-    RAconf = {'Prefix':'fd00:141:64:1::','Prefixlen':'64','RA_LLSrcAddr':'', 'M': False, 'O': False, 'RouterLifeTime':'1800', 'CHLim': '255'}   # Router Advetisement
-    NSconf = {'NS_LLSrcAddr': ':::::'} # Neighbor Solicitation
-    NAconf = {'NA_tgtAddr': '::', 'R' : True, 'S' : False, 'O' : True} # Neighbor Advertisment
+    RAconf = {'Prefix':'fd00:141:64:1::','Prefixlen':'64','RA_LLSrcAddr':'', 'M': False, 'O': False, 'RouterLifeTime':'1800', 'CHLim': '255'}
+    NSconf = {'NS_LLSrcAddr': ':::::'}
+    NAconf = {'NA_tgtAddr': '::', 'R' : True, 'S' : False, 'O' : True}
     ICMP = {'indize': 0, 'Code': '1', 'Type': '0', 'Message': ''}
-    # indize: 0 = Ping, 1 = Router Advertisement, 2 = Router Solicitation, 3 = Neighbor Advertisement, 4 = Neighbor Solicitation, 5 = Paket Too Big, 6 = other Type
-    PTB = {'MTU': '1280'} # ICMP Paket too big
+    PTB = {'MTU': '1280'}
     TCP_UDP = {'SrcPort': '20', 'DstPort': '80', 'Flags': 2}
-    Payload = {'indizeP': 0, 'Payloadlen': '1', 'PayloadString': 'X', 'Capture File': '', 'Packet No.': '1'}	# Payload information
-    # indizeP: 0 = String wiht 'X' * len, 1 = String, 2 = pcap File, 3 = no Payload
-    
+    Payload = {'indizeP': 0, 'Payloadlen': '1', 'PayloadString': 'X', 'Capture File': '', 'Packet No.': '1'}
+  
+'''
+class GetIPv6Addr():
+    """Diese Funktion enthält ein Werkzeug, mit dessen Hilfe die lokalen IPv6 Addressen ermittelt und in die entsprechende ComboBox hizugefügt werden."""
+    def __init__(self):
+        query = Ether()/IPv6(dst='ff02::1',hlim=1)/IPv6ExtHdrHopByHop(autopad=0,nh=58)/ICMPv6MLQuery()
+        query[2].options='\x05\x02\x00\x00\x00\x00'
+        sendp(query)
+        ans=sniff(filter='ip6[48]=131', timeout=10)
+        addresses=[]
+        request = Ether()/IPv6(dst='ff02::1')/ICMPv6EchoRequest()
+        ans2 = srp(request, multi = 1, timeout = 10)
+        if ans != None:
+            for paket in ans:
+                addresses.append(paket[IPv6].src)
+        if ans2 != None:
+            for paket in ans2[0]:
+                addresses.append(paket[1][IPv6].src)
+        uniqueAddr = set(addresses)
+        return(uniqueAddr)'''
 
 class Buildit:
+    """Diese Klasse erstellt das IPv6 Packet in Scapy Format und Verarbeitet es je nach Option weiter.
     
-    def __init__(self,Type, File, IPv6Paket):
+    :param Option: Mögliche Optionen für die Weiterverarbeitung
+    :type Option: int 
+    :param File: Pfad zum Speichern in einer pcap-Datei
+    :type File: file
+    :param IPv6Paket: IPv6 Packet mit Packetinformationen
+    :type IPv6Paket: class.IPv6Paket
+
+    Optionen::
+
+            0 -- Senden
+            1 -- Speichern als *.pcap 
+            2 -- Speichern im Zwischenspeicher
+
+    """
+    
+    def __init__(self,Option, File, IPv6Paket):
 
         self.IPv6 = IPv6Paket
         self.IPv6packet = {'EthHeader':None,'IPHeader':None,
@@ -93,7 +169,7 @@ class Buildit:
 
         self.NumExtHdr = len(self.IPv6.ExtHdr)
         if self.NumExtHdr > 0:
-            self.IPv6packet['ExtHeader'] = self.BuildExtHdr(self.NumExtHdr)
+            self.IPv6packet['ExtHeader'] = self.BuildExtHdr(self.NumExtHdr - 1)
         else:
             self.IPv6packet['ExtHeader'] = None
 
@@ -123,11 +199,11 @@ class Buildit:
             self.IPv6Scapy=(self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']/self.IPv6packet['ExtHeader'])
     
 
-        if Type == 0:
+        if Option == 0:
             ## send
             sendp(self.IPv6Scapy, iface = Interface)
                 
-        elif Type == 1:
+        elif Option == 1:
             ## save as .pcap
 			
             wrpcap(File, self.IPv6Scapy)
@@ -144,9 +220,14 @@ class Buildit:
     ## Build Extension Header
 
     def  BuildExtHdr(self, Num):
+        """Erstellen der Extension Header im Scapycode.
+        
+        :param Num: Anzahl der Extension Header
+        :type Num: int
 
+        """
         ExtensionHeader = ''
-        for d in range(Num-1):
+        for d in range(Num):
             if self.IPv6.ExtHdr[d][0] == 'Hop By Hop Options':
                 if d == 0:
                     ExtensionHeader = IPv6ExtHdrHopByHop()
@@ -182,6 +263,27 @@ class Buildit:
     ## Build Next Header
 
     def BuildNextHeader(self):
+        """Auswahl des richtigen Next Header Protokolls anhand des ``IPv6.indize`` für den Next Header Type und ``IPv6.ICMP['indize']`` für den richtigen ICMP Type (bei ``IPv6.indize == 0``).
+        
+        Nach Auswahl des richtigen Next Header Protokolls wird eine entsprechende Funktion augerufen.
+
+        ``IPv6.indize``::
+            
+             0 = ICMP
+             1 = TCP
+             2 = UDP
+             3 = no Next Header
+
+        ``IPv6.ICMP['indize']``::
+
+             0 = Ping
+             1 = Router Advertisement
+             2 = Router Solicitation 
+             3 = Neighbor Advertisement
+             4 = Neighbor Solicitation
+             5 = Paket Too Big
+             6 = other Type
+        """
 
         if self.IPv6.indize == 0:               # ICMP
             if self.IPv6.ICMP['indize'] == 0:        # Ping
