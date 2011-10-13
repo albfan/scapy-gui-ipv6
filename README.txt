@@ -4,8 +4,8 @@
 ##                                                                      #
 #########################################################################
 ##                                                                      #
-## Version: 1.3                                                         #
-## Date:    31.03.2011                                                  #
+## Version: 1.4                                                         #
+## Date:    26.08.2011                                                  #
 ##                                                                      #
 #########################################################################
 
@@ -22,7 +22,8 @@ INSTALLATION:
 You can simply download the current version from here: 
 http://code.google.com/p/scapy-gui-ipv6/downloads/list
 
-Unzip and run the included Python script.
+Unzip and run the included Python 'gui.py' script as root or 
+using SUDO.
 
 
 PREREQUISITES
@@ -34,7 +35,9 @@ here: http://www.secdev.org/projects/scapy/
 
 In order to send IPv6 packets to the network directly from the GUI, 
 you must have full privileges on the machine. Start the program with
- $ sudo gui.py
+
+  $ sudo gui.py
+
 or a similar command depending on your platform.
 
 
