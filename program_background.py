@@ -40,8 +40,8 @@
 ##                                                                      #
 #########################################################################
 ##                                                                      #
-## Version: 2.0                                                         #
-## Date:    03.11.2011                                                  #
+## Version: 2.1                                                         #
+## Date:    09.11.2011                                                  #
 ##                                                                      #
 #########################################################################
 
@@ -82,10 +82,14 @@ class IPv6Packet:
                                 4 = Parameter Problem
                                 128 = Echo Request
                                 129 = Echo Reply
+                                130 - Multicast Listener Query
+                                131 - Multicast Listener Report
+                                132 - Multicast Listener Done
                                 133 = Router Solicitation
                                 134 = Router Advertisement
                                 135 = Neighbor Solicitation
                                 136 = Neighbor Advertisement
+                                137 = Redirect
                                 256 = other Type
 
               -- PTB    -- ICMP Packet too big (MTU)
@@ -102,13 +106,14 @@ class IPv6Packet:
     
     """
     EthHdr = {'LLSrcAddr': None, 'LLDstAddr': None, 'Interface': None}
-    IPHdr = {'SrcIPAddr': None, 'DstIPAddr': None, 'HopLimit': 64}
+    IPHdr = {'SrcIPAddr': None, 'DstIPAddr': None, 'HopLimit': 64, 'TrafficClass': 0, 'FlowLabel': 0 , 'ExpertMode': False}
     ExtHdr = [['','','','']]
     indize = 0
     RAconf = {'Prefix':'fd00:141:64:1::','Prefixlen':'64','RA_LLSrcAddr':'', 'M': False, 'O': False, 'RLTime':'1800', 'CHLim': '255'}
-    NSconf = {'NS_tgtAddr': ''}
+    NSconf = {'NS_tgtAddr': '::'}
     NAconf = {'NA_tgtAddr': '::', 'R' : True, 'S' : False, 'O' : True}
-    ICMP = {'indize': 128, 'Code': '1', 'Type': '0', 'Message': '', 'Pointer': '6'}
+    Redirect = {'Re_tgtAddr': '::', 'Re_DstAddr': '::'}
+    ICMP = {'indize': 128, 'Type': '1', 'Code': '0', 'Message': '', 'Pointer': '6', 'MRD': 10000, 'MLAddr': '::'}
     PTB = {'MTU': '1280'}
     TCP_UDP = {'SrcPort': '20', 'DstPort': '80', 'Flags': 2}
     Payload = {'indizeP': 0, 'Payloadlen': '1', 'PayloadString': 'X', 'Capture File': '', 'Packet No.': '1'}
@@ -154,6 +159,9 @@ class Buildit:
         self.IPv6packet['IPHeader'] = IPv6(dst=self.IPv6.IPHdr['DstIPAddr'],
                                            src=self.IPv6.IPHdr['SrcIPAddr'],
                                            hlim=self.IPv6.IPHdr['HopLimit'])
+        if self.IPv6.IPHdr['ExpertMode'] == True:
+            self.IPv6packet['IPHeader'].tc = self.IPv6.IPHdr['TrafficClass']
+            self.IPv6packet['IPHeader'].fl = self.IPv6.IPHdr['FlowLabel']
 
         ############################
         ## add extension header if set
@@ -189,9 +197,14 @@ class Buildit:
         elif self.IPv6packet['ExtHeader'] != (None or '') and self.IPv6packet['NextHeader'] == None:
             self.IPv6Scapy = (self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']/self.IPv6packet['ExtHeader'])
 
+        if self.IPv6.indize == 0 and self.IPv6.ICMP['indize'] in (130, 131, 132): # Next Header for Multicast Listener Messages
+            print(self.IPv6.indize, self.IPv6.ICMP['indize'])
+            self.IPv6Scapy[len(self.IPv6.ExtHdr)].nh = 58
+            self.IPv6Scapy[len(self.IPv6.ExtHdr)].show()
+
         Command = self.IPv6Scapy.command()
 
-        if len(self.Options) >= 1:
+        if len(self.Options) >= 1:      # Options of the Extension Header Hop By Hop und Destination
             for d in self.Options:
                 if d[1] == 'Pad1 Option':
                     self.IPv6Scapy[d[0]+2].autopad = 0
@@ -201,11 +214,12 @@ class Buildit:
                     self.IPv6Scapy[d[0]+2].autopad = 0
                     self.IPv6Scapy[d[0]+2].options = ((pack('B',int(str(d[2]).split()[0]))) +
                                                       (pack('B',int(str(d[2]).split()[-1]))) + 
-                                                      str(str(d[3]).decode('unicode_escape')))
+                                                      str(str(d[3]).decode('string_escape')))
                     length2=len(self.IPv6Scapy[d[0]+2])
                     while ((length2-length1) % 8) != 0:
                         self.IPv6Scapy[d[0]+2].options += '\x00'
                         length2=len(self.IPv6Scapy[d[0]+2])
+
         if Option == 0:
             ## send
             sendp(self.IPv6Scapy, iface = Interface)
@@ -293,26 +307,36 @@ class Buildit:
              4 = Parameter Problem
              128 = Echo Request
              129 = Echo Reply
+             130 - Multicast Listener Query
+             131 - Multicast Listener Report
+             132 - Multicast Listener Done
              133 = Router Solicitation
              134 = Router Advertisement
              135 = Neighbor Solicitation
              136 = Neighbor Advertisement
+             137 = Redirect
              256 = other Type
         """
 
         if self.IPv6.indize == 0:               # ICMP
             if self.IPv6.ICMP['indize'] == 1:          # Destination Unreachable
                 NextHeader = self.BuildICMPv6_DestUnreach()
-            elif self.IPv6.ICMP['indize'] == 2:          # Packet Too Big
+            elif self.IPv6.ICMP['indize'] == 2:        # Packet Too Big
                 NextHeader = self.BuildICMPv6_PacketTooBig()
-            elif self.IPv6.ICMP['indize'] == 3:          # Time Exceeded
+            elif self.IPv6.ICMP['indize'] == 3:        # Time Exceeded
                 NextHeader = self.BuildICMPv6_TimeExceeded()
-            elif self.IPv6.ICMP['indize'] == 4:          # Parameter Problem
+            elif self.IPv6.ICMP['indize'] == 4:        # Parameter Problem
                 NextHeader = self.BuildICMPv6_ParamProblem()
             elif self.IPv6.ICMP['indize'] == 128:      # Ping
                 NextHeader = self.BuildICMPv6_Ping()
             elif self.IPv6.ICMP['indize'] == 129:      # Echo Reply
                 NextHeader = self.BuildICMPv6_EchoReply()
+            elif self.IPv6.ICMP['indize'] == 130:      # Multicast Listener Query
+                NextHeader = self.BuildICMPv6_MLQuery()
+            elif self.IPv6.ICMP['indize'] == 131:      # Multicast Listener Report
+                NextHeader = self.BuildICMPv6_MLReport()
+            elif self.IPv6.ICMP['indize'] == 132:      # Multicast Listener Done
+                NextHeader = self.BuildICMPv6_MLDone()
             elif self.IPv6.ICMP['indize'] == 133:      # Router Solicitation
                 NextHeader = self.BuildICMPv6_RS()
             elif self.IPv6.ICMP['indize'] == 134:      # Router Advetisement
@@ -321,6 +345,8 @@ class Buildit:
                 NextHeader = self.BuildICMPv6_NS()
             elif self.IPv6.ICMP['indize'] == 136:      # Neighbor Advetisement
                 NextHeader = self.BuildICMPv6_NA()
+            elif self.IPv6.ICMP['indize'] == 137:      # Redirect
+                NextHeader = self.BuildICMPv6_Redirect()
             elif self.IPv6.ICMP['indize'] == 256:      # ICMP Unknown
                 NextHeader = self.BuildICMPv6_Unknown()
         elif self.IPv6.indize == 1:             # TCP
@@ -403,6 +429,27 @@ class Buildit:
         reply = ICMPv6EchoReply(data=self.IPv6.ICMP['Message'])
         return(reply)
 
+    ## Multicast Listener Query
+
+    def BuildICMPv6_MLQuery(self):
+        """This function creates a Multicast Listener Query message for the scapy code.
+"""
+        return(ICMPv6MLQuery(mladdr=self.IPv6.ICMP['MLAddr'], mrd=int(self.IPv6.ICMP['MRD'])))
+
+    ## Multicast Listener Report
+
+    def BuildICMPv6_MLReport(self):
+        """This function creates a Multicast Listener Report message for the scapy code.
+"""
+        return(ICMPv6MLReport(mladdr=self.IPv6.ICMP['MLAddr']))
+
+    ## Multicast Listener Done
+
+    def BuildICMPv6_MLDone(self):
+        """This function creates a Multicast Listener Done message for the scapy code.
+"""
+        return(ICMPv6MLDone(mladdr=self.IPv6.ICMP['MLAddr']))
+
     ## Router Solicitation
 
     def BuildICMPv6_RS(self):
@@ -468,6 +515,15 @@ This values are saved in the IPv6 array ``IPv6.NAconf``
         na = ICMPv6ND_NA(tgt=str(self.IPv6.NAconf['NA_tgtAddr']), R = RFlag, S = SFlag, O = OFlag)
         return(na)
 
+    ## Redirect
+
+    def BuildICMPv6_Redirect(self):
+        """This function creates a Redirect message for the scapy code.
+
+It includes the target and destination address.
+"""
+        return(ICMPv6ND_Redirect(tgt=str(self.IPv6.Redirect['Re_tgtAddr']), dst=str(self.IPv6.Redirect['Re_DstAddr'])))
+
     ## Packet Too Big
 
     def BuildICMPv6_PacketTooBig(self):
@@ -476,11 +532,11 @@ This values are saved in the IPv6 array ``IPv6.NAconf``
 For the packet too big message is the mtu necessary. It is set to 1280 by default.
 Optional you inlude a packet from a pcap file as payload.
 """
-        if self.IPv6.PTB['MTU'] != '':
+        if self.IPv6.PTB['MTU'] != '': 
             MTU = self.IPv6.PTB['MTU']
         else:
             MTU = None
-        q = ICMPv6PacketTooBig(mtu=int(MTU))
+        q = ICMPv6PacketTooBig(mtu=int(MTU), code=int(self.IPv6.ICMP['Code']))
 
         if self.IPv6.Payload['Capture File'] != '':
             path = self.IPv6.Payload['Capture File']

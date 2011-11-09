@@ -40,8 +40,8 @@
 ##                                                                      #
 #########################################################################
 ##                                                                      #
-## Version: 2.0                                                         #
-## Date:    03.11.2011                                                  #
+## Version: 2.1                                                         #
+## Date:    09.11.2011                                                  #
 ##                                                                      #
 #########################################################################
 
@@ -122,16 +122,33 @@ class Main(QtGui.QMainWindow):
         self.IPv6_Label_3.move(5, 175)
         self.IPv6_HopLimit = QtGui.QLineEdit("64",self.tab_IPv6)
         self.IPv6_HopLimit.setInputMask('999')
-        self.IPv6_HopLimit.setGeometry(QtCore.QRect(10, 200, 60, 30))   
-        self.connect(self.IPv6_HopLimit, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_8)   
-        
+        self.IPv6_HopLimit.setGeometry(QtCore.QRect(10, 200, 60, 30))
+        self.IPv6_Button_ExpertMode = QtGui.QCheckBox('Expert Mode', self.tab_IPv6)
+        self.IPv6_Button_ExpertMode.move(375, 35)
+        self.IPv6_ExpertMode = QtGui.QWidget(self.tab_IPv6)
+        self.IPv6_ExpertMode.setGeometry(QtCore.QRect(400, 75, 200, 225))
+        self.IPv6_ExpertMode.setVisible(False)
+        self.IPv6_Label_4 = QtGui.QLabel("Traffic Class:", self.IPv6_ExpertMode)
+        self.IPv6_Label_4.move(5, 5)
+        self.IPv6_TrafficClass = QtGui.QLineEdit("0",self.IPv6_ExpertMode)
+        self.IPv6_TrafficClass.setInputMask('999')
+        self.IPv6_TrafficClass.setGeometry(QtCore.QRect(10, 30, 60, 30))  
+        self.IPv6_Label_5 = QtGui.QLabel("Flow Label:", self.IPv6_ExpertMode)
+        self.IPv6_Label_5.move(5, 75)
+        self.IPv6_FlowLabel = QtGui.QLineEdit("0",self.IPv6_ExpertMode)
+        self.IPv6_FlowLabel.setInputMask('9999999')
+        self.IPv6_FlowLabel.setGeometry(QtCore.QRect(10, 100, 60, 30))
+        self.connect(self.IPv6_HopLimit, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_8)
+        self.connect(self.IPv6_TrafficClass, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_8)
+        self.connect(self.IPv6_FlowLabel, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_20)
+        self.connect(self.IPv6_Button_ExpertMode, QtCore.SIGNAL('clicked(bool)'), self.slotExpertMode)
 
             # Third Tab - Extension Header
         self.tab_ExtHdr = QtGui.QWidget(self.tabWidget)
         self.tabWidget.addTab(self.tab_ExtHdr, "Extension Header")
         self.ExtHdr_tableWidget = QtGui.QTableWidget(0, 1, self.tab_ExtHdr)
         self.ExtHdr_tableWidget.setHorizontalHeaderLabels(["Extension Header"])
-        self.ExtHdr_tableWidget.setColumnWidth(0,230)
+        self.ExtHdr_tableWidget.setColumnWidth(0,251)
         self.ExtHdr_tableWidget.setGeometry(QtCore.QRect(130, 10, 250, 250))
         self.ExtHdr_AddButton = QtGui.QPushButton("Add", self.tab_ExtHdr)
         self.ExtHdr_AddButton.move(420, 50)
@@ -152,6 +169,7 @@ class Main(QtGui.QMainWindow):
         self.NextHeader_Type.addItem('UDP')
         self.NextHeader_Type.addItem('No Next Header')
         self.NextHeader_Type.move(10, 20)
+
                 # ICMP Typ
         self.tab_NH_ICMP = QtGui.QWidget(self.tab_NextHeader)
         self.tab_NH_ICMP.setGeometry(QtCore.QRect(0, 50, 600, 280))
@@ -163,10 +181,14 @@ class Main(QtGui.QMainWindow):
         self.ICMP_Type.addItem('4 - Parameter Problem')
         self.ICMP_Type.addItem('128 - Echo Request')
         self.ICMP_Type.addItem('129 - Echo Reply')
+        self.ICMP_Type.addItem('130 - Multicast Listener Query')
+        self.ICMP_Type.addItem('131 - Multicast Listener Report')
+        self.ICMP_Type.addItem('132 - Multicast Listener Done')
         self.ICMP_Type.addItem('133 - Router Solicitation')
         self.ICMP_Type.addItem('134 - Router Advertisement')
         self.ICMP_Type.addItem('135 - Neighbor Solicitation')
         self.ICMP_Type.addItem('136 - Neighbor Advertisement')
+        self.ICMP_Type.addItem('137 - Redirect')
         self.ICMP_Type.addItem('other ICMP Type')
         self.ICMP_Type.setCurrentIndex(self.ICMP_Type.findText('128 - Echo Request'))
         self.ICMP_Type.move(200, 20)
@@ -202,18 +224,23 @@ class Main(QtGui.QMainWindow):
         self.NH_ICMP_PTB = QtGui.QWidget(self.tab_NH_ICMP)
         self.NH_ICMP_PTB.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_PTB.setVisible(False)
-        self.NH_ICMP_Label = QtGui.QLabel("MTU:", self.NH_ICMP_PTB)
-        self.NH_ICMP_Label.move(5, 10)
+        self.Label = QtGui.QLabel("Code:", self.NH_ICMP_PTB)
+        self.Label.move(5, 10)
+        self.Label_2 = QtGui.QLabel("MTU:", self.NH_ICMP_PTB)
+        self.Label_2.move(205, 10)
+        self.NH_ICMP_PTB_Code = QtGui.QLineEdit("0",self.NH_ICMP_PTB)
+        self.NH_ICMP_PTB_Code.setGeometry(QtCore.QRect(10, 35, 60, 30))
+        self.NH_ICMP_PTB_Code.setInputMask('999')
         self.NH_ICMP_PTB_MTU = QtGui.QLineEdit("1280", self.NH_ICMP_PTB)
         self.NH_ICMP_PTB_MTU.setInputMask('9999999999')
-        self.NH_ICMP_PTB_MTU.setGeometry(QtCore.QRect(10, 35, 100, 30))
+        self.NH_ICMP_PTB_MTU.setGeometry(QtCore.QRect(210, 35, 100, 30))
         self.connect(self.NH_ICMP_PTB_MTU, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_32)
-        self.Label = QtGui.QLabel("Define a packet which will be used as payload. (necessary)", self.NH_ICMP_PTB)
-        self.Label.setGeometry(QtCore.QRect(5, 80, 400, 30))
-        self.Label_2 = QtGui.QLabel("Capture File:", self.NH_ICMP_PTB)
-        self.Label_2.move(5, 120)
-        self.Label_3 = QtGui.QLabel("Packet No.:", self.NH_ICMP_PTB)
-        self.Label_3.move(405, 120)
+        self.Label_3 = QtGui.QLabel("Define a packet which will be used as payload. (necessary)", self.NH_ICMP_PTB)
+        self.Label_3.setGeometry(QtCore.QRect(5, 80, 400, 30))
+        self.Label_4 = QtGui.QLabel("Capture File:", self.NH_ICMP_PTB)
+        self.Label_4.move(5, 120)
+        self.Label_5 = QtGui.QLabel("Packet No.:", self.NH_ICMP_PTB)
+        self.Label_5.move(405, 120)
         self.NH_ICMP_PTB_PacketFile = QtGui.QLineEdit(self.IPv6.Payload['Capture File'], self.NH_ICMP_PTB)
         self.NH_ICMP_PTB_PacketFile.setGeometry(QtCore.QRect(10, 140, 301, 30))
         self.NH_ICMP_PTB_PacketNo = QtGui.QLineEdit(self.IPv6.Payload['Packet No.'], self.NH_ICMP_PTB)
@@ -221,6 +248,7 @@ class Main(QtGui.QMainWindow):
         self.NH_ICMP_PTB_pushButton = QtGui.QPushButton("Search...", self.NH_ICMP_PTB)
         self.NH_ICMP_PTB_pushButton.move(310, 141)
         self.connect(self.NH_ICMP_PTB_pushButton, QtCore.SIGNAL('clicked(bool)'), self.ask_for_filename)
+        self.connect(self.NH_ICMP_PTB_Code, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_8)
 
                     # Time Exceeded
 
@@ -299,6 +327,59 @@ class Main(QtGui.QMainWindow):
         self.NH_ICMP_EchoReply_Message = QtGui.QTextEdit("", self.NH_ICMP_EchoReply)
         self.NH_ICMP_EchoReply_Message.setGeometry(QtCore.QRect(10, 70, 200, 50))
 
+                    # Multicast Listener Query
+
+        self.NH_ICMP_MultiQuery = QtGui.QWidget(self.tab_NH_ICMP)
+        self.NH_ICMP_MultiQuery.setGeometry(QtCore.QRect(0, 0, 600, 210))
+        self.NH_ICMP_MultiQuery.setVisible(False)
+        self.Label = QtGui.QLabel("Maximum Response Delay:", self.NH_ICMP_MultiQuery)
+        self.Label.move(5, 10)
+        self.Label_2 = QtGui.QLabel("Multicast Listener Address:", self.NH_ICMP_MultiQuery)
+        self.Label_2.move(5, 105)
+        self.NH_ICMP_MultiQuery_MRD = QtGui.QLineEdit("10000",self.NH_ICMP_MultiQuery)
+        self.NH_ICMP_MultiQuery_MRD.setGeometry(QtCore.QRect(10, 35, 60, 30))
+        self.NH_ICMP_MultiQuery_MRD.setInputMask('99999')
+        self.NH_ICMP_MultiQuery_MLAddr = QtGui.QComboBox(self.NH_ICMP_MultiQuery)
+        self.NH_ICMP_MultiQuery_MLAddr.setGeometry(QtCore.QRect(10, 130, 300, 31))
+        self.NH_ICMP_MultiQuery_MLAddr.setEditable(True)
+        self.NH_ICMP_MultiQuery_MLAddr.setDuplicatesEnabled(True)
+        self.NH_ICMP_MultiQuery_MLAddr.addItem('::')
+        self.NH_ICMP_MultiQuery_MLAddr.addItem('ff01::1')
+        self.NH_ICMP_MultiQuery_MLAddr.addItem('ff02::1')
+        self.NH_ICMP_MultiQuery_MLAddr.addItem('ff02::2')
+        self.connect(self.NH_ICMP_MultiQuery_MRD, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_16)
+
+                    # Multicast Listener Report
+
+        self.NH_ICMP_MultiReport = QtGui.QWidget(self.tab_NH_ICMP)
+        self.NH_ICMP_MultiReport.setGeometry(QtCore.QRect(0, 0, 600, 210))
+        self.NH_ICMP_MultiReport.setVisible(False)
+        self.Label = QtGui.QLabel("Multicast Listener Address:", self.NH_ICMP_MultiReport)
+        self.Label.move(5, 105)
+        self.NH_ICMP_MultiReport_MLAddr = QtGui.QComboBox(self.NH_ICMP_MultiReport)
+        self.NH_ICMP_MultiReport_MLAddr.setGeometry(QtCore.QRect(10, 130, 300, 31))
+        self.NH_ICMP_MultiReport_MLAddr.setEditable(True)
+        self.NH_ICMP_MultiReport_MLAddr.setDuplicatesEnabled(True)
+        self.NH_ICMP_MultiReport_MLAddr.addItem('::')
+        self.NH_ICMP_MultiReport_MLAddr.addItem('ff01::1')
+        self.NH_ICMP_MultiReport_MLAddr.addItem('ff02::1')
+        self.NH_ICMP_MultiReport_MLAddr.addItem('ff02::2')
+
+                    # Multicast Listener Done
+
+        self.NH_ICMP_MultiDone = QtGui.QWidget(self.tab_NH_ICMP)
+        self.NH_ICMP_MultiDone.setGeometry(QtCore.QRect(0, 0, 600, 210))
+        self.NH_ICMP_MultiDone.setVisible(False)
+        self.Label = QtGui.QLabel("Multicast Listener Address:", self.NH_ICMP_MultiDone)
+        self.Label.move(5, 105)
+        self.NH_ICMP_MultiDone_MLAddr = QtGui.QComboBox(self.NH_ICMP_MultiDone)
+        self.NH_ICMP_MultiDone_MLAddr.setGeometry(QtCore.QRect(10, 130, 300, 31))
+        self.NH_ICMP_MultiDone_MLAddr.setEditable(True)
+        self.NH_ICMP_MultiDone_MLAddr.setDuplicatesEnabled(True)
+        self.NH_ICMP_MultiDone_MLAddr.addItem('::')
+        self.NH_ICMP_MultiDone_MLAddr.addItem('ff01::1')
+        self.NH_ICMP_MultiDone_MLAddr.addItem('ff02::1')
+        self.NH_ICMP_MultiDone_MLAddr.addItem('ff02::2')
 
                     # Router Solicitation
 
@@ -398,6 +479,32 @@ class Main(QtGui.QMainWindow):
         self.NH_ICMP_NeighborAdv_OFlag.move(10, 120)
         self.NH_ICMP_NeighborAdv_OFlag.setChecked(self.IPv6.NAconf['O'])
         
+                    # Redirect
+        
+        self.NH_ICMP_Redirect = QtGui.QWidget(self.tab_NH_ICMP)
+        self.NH_ICMP_Redirect.setGeometry(QtCore.QRect(0, 0, 600, 210))
+        self.NH_ICMP_Redirect.setVisible(False)
+        self.Label = QtGui.QLabel("Target Address:", self.NH_ICMP_Redirect)
+        self.Label.move(5, 10)
+        self.Label_2 = QtGui.QLabel("Destination Address:", self.NH_ICMP_Redirect)
+        self.Label_2.move(5, 100)
+        self.NH_ICMP_Redirect_tgtAddr = QtGui.QComboBox(self.NH_ICMP_Redirect)
+        self.NH_ICMP_Redirect_tgtAddr.setGeometry(QtCore.QRect(10, 35, 300, 31))
+        self.NH_ICMP_Redirect_tgtAddr.setEditable(True)
+        self.NH_ICMP_Redirect_tgtAddr.setDuplicatesEnabled(True)
+        self.NH_ICMP_Redirect_tgtAddr.addItem('::')
+        self.NH_ICMP_Redirect_tgtAddr.addItem('ff01::1')
+        self.NH_ICMP_Redirect_tgtAddr.addItem('ff02::1')
+        self.NH_ICMP_Redirect_tgtAddr.addItem('ff80::1')
+        self.NH_ICMP_Redirect_DstAddr = QtGui.QComboBox(self.NH_ICMP_Redirect)
+        self.NH_ICMP_Redirect_DstAddr.setGeometry(QtCore.QRect(10, 130, 300, 31))
+        self.NH_ICMP_Redirect_DstAddr.setEditable(True)
+        self.NH_ICMP_Redirect_DstAddr.setDuplicatesEnabled(True)
+        self.NH_ICMP_Redirect_DstAddr.addItem('::')
+        self.NH_ICMP_Redirect_DstAddr.addItem('ff01::1')
+        self.NH_ICMP_Redirect_DstAddr.addItem('ff02::1')
+        self.NH_ICMP_Redirect_DstAddr.addItem('ff80::1')
+        
                     # other ICMP Type
         
         self.NH_ICMP_otherType = QtGui.QWidget(self.tab_NH_ICMP)
@@ -475,6 +582,7 @@ class Main(QtGui.QMainWindow):
         self.connect(self.NH_TCP_Payload_PcapFile, QtCore.SIGNAL('clicked(bool)'), self.slotPayload)
         self.NH_TCP_Payload_NoPayload = QtGui.QRadioButton("No Payload", self.NH_TCP_Payload)
         self.NH_TCP_Payload_NoPayload.move(30, 170)
+
                 # UDP
         self.NH_UDP = QtGui.QWidget(self.tab_NextHeader)
         self.NH_UDP.setGeometry(QtCore.QRect(0, 60, 600, 250))
@@ -551,12 +659,15 @@ class Main(QtGui.QMainWindow):
                 self.NH_ICMP_NeighborAdv_tgtAddr.addItem(str(ipv6[d][2]))
                 self.NH_ICMP_NeighborSol_tgtAddr.addItem(str(ipv6[d][2]))
                 self.IPv6_DstAddr.addItem(str(ipv6[d][2]))
+                self.NH_ICMP_Redirect_tgtAddr.addItem(str(ipv6[d][2]))
+                self.NH_ICMP_Redirect_DstAddr.addItem(str(ipv6[d][2]))
                 self.IPv6DstList.append(str(ipv6[d][2]))
-        for d in range(0, length_ipv6):
             if ipv6[d][1] != (0 or 128) and self.IPv6DstList.contains(str(ipv6[d][0])+'1') == False:
                 self.NH_ICMP_NeighborAdv_tgtAddr.addItem(str(ipv6[d][0])+'1')
                 self.NH_ICMP_NeighborSol_tgtAddr.addItem(str(ipv6[d][0])+'1')
                 self.IPv6_DstAddr.addItem(str(ipv6[d][0])+'1')
+                self.NH_ICMP_Redirect_tgtAddr.addItem(str(ipv6[d][0])+'1')
+                self.NH_ICMP_Redirect_DstAddr.addItem(str(ipv6[d][0])+'1')
                 self.IPv6DstList.append(str(ipv6[d][0])+'1')
 
     def slotMax2_32(self):
@@ -565,11 +676,16 @@ class Main(QtGui.QMainWindow):
         if int(self.NH_ICMP_PTB_MTU.text()) >= 4294967296: self.NH_ICMP_PTB_MTU.setText('4294967295')
         if int(self.NH_ICMP_ParamProblem_Pointer.text()) >= 4294967296: self.NH_ICMP_ParamProblem_Pointer.setText('4294967295')
 
+    def slotMax2_20(self):
+        """This function sets the maximum Value of a Line Edit Widget to 1048575 (2^20 - 1).
+"""
+        if int(self.IPv6_FlowLabel.text()) >= 1048576: self.IPv6_FlowLabel.setText('1048575')
+
     def slotMax2_16(self):
         """This function sets the maximum Value of a Line Edit Widget to 65535 (2^16 - 1).
 """
-        if int(self.NH_ICMP_RouterAdv_RLTime.text()) >= 65536: 
-            self.NH_ICMP_RouterAdv_RLTime.setText('65535')
+        if int(self.NH_ICMP_RouterAdv_RLTime.text()) >= 65536: self.NH_ICMP_RouterAdv_RLTime.setText('65535')
+        if int(self.NH_ICMP_MultiQuery_MRD.text()) >= 65536: self.NH_ICMP_MultiQuery_MRD.setText('65535')
 
     def slotMax2_8(self):
         """This function sets the maximum Value of a Line Edit Widget to 255 (2^8-1).
@@ -578,15 +694,20 @@ class Main(QtGui.QMainWindow):
         if int(self.NH_ICMP_otherType_Code.text()) >= 256: self.NH_ICMP_otherType_Code.setText('255')
         if int(self.NH_ICMP_RouterAdv_CHLim.text()) >= 256: self.NH_ICMP_RouterAdv_CHLim.setText('255')
         if int(self.NH_ICMP_DestUnreach_Code.text()) >= 256: self.NH_ICMP_DestUnreach_Code.setText('255')
+        if int(self.NH_ICMP_PTB_Code.text()) >= 256: self.NH_ICMP_PTB_Code.setText('255')
         if int(self.NH_ICMP_TimeExceeded_Code.text()) >= 256: self.NH_ICMP_TimeExceeded_Code.setText('255')
         if int(self.NH_ICMP_ParamProblem_Code.text()) >= 256: self.NH_ICMP_ParamProblem_Code.setText('255')
         if int(self.IPv6_HopLimit.text()) >= 256: self.IPv6_HopLimit.setText('255')
+        if int(self.IPv6_TrafficClass.text()) >= 256: self.IPv6_TrafficClass.setText('255')
 
     def slotMax2_7(self):
         """This function sets the maximum Value of a Line Edit Widget to 128 (2^7).
         """
         if int(self.NH_ICMP_RouterAdv_PrefixLen.text()) >= 129: 
             self.NH_ICMP_RouterAdv_PrefixLen.setText('128')
+
+    def slotExpertMode(self):
+        self.IPv6_ExpertMode.setVisible(self.IPv6_Button_ExpertMode.isChecked())
 
     def NHConf(self):
         self.tab_NH_ICMP.setVisible(False)
@@ -611,33 +732,30 @@ class Main(QtGui.QMainWindow):
         self.NH_ICMP_ParamProblem.setVisible(False)
         self.NH_ICMP_Ping.setVisible(False)
         self.NH_ICMP_EchoReply.setVisible(False)
+        self.NH_ICMP_MultiQuery.setVisible(False)
+        self.NH_ICMP_MultiReport.setVisible(False)
+        self.NH_ICMP_MultiDone.setVisible(False)
         self.NH_ICMP_RouterSol.setVisible(False)
         self.NH_ICMP_RouterAdv.setVisible(False)
         self.NH_ICMP_NeighborSol.setVisible(False)
         self.NH_ICMP_NeighborAdv.setVisible(False)
+        self.NH_ICMP_Redirect.setVisible(False)
         self.NH_ICMP_otherType.setVisible(False)
-        if self.ICMP_Type.currentText() == '1 - Destination Unreachable':
-            self.NH_ICMP_DestUnreach.setVisible(True)
-        elif self.ICMP_Type.currentText() == '2 - Packet Too Big':
-            self.NH_ICMP_PTB.setVisible(True)
-        elif self.ICMP_Type.currentText() == '3 - Time Exceeded':
-            self.NH_ICMP_TimeExceeded.setVisible(True)
-        elif self.ICMP_Type.currentText() == '4 - Parameter Problem':
-            self.NH_ICMP_ParamProblem.setVisible(True)
-        elif self.ICMP_Type.currentText() == '128 - Echo Request':
-            self.NH_ICMP_Ping.setVisible(True)
-        elif self.ICMP_Type.currentText() == '129 - Echo Reply':
-            self.NH_ICMP_EchoReply.setVisible(True)
-        elif self.ICMP_Type.currentText() == '133 - Router Solicitation':
-            self.NH_ICMP_RouterSol.setVisible(True)
-        elif self.ICMP_Type.currentText() == '134 - Router Advertisement':
-            self.NH_ICMP_RouterAdv.setVisible(True)
-        elif self.ICMP_Type.currentText() == '135 - Neighbor Solicitation':
-            self.NH_ICMP_NeighborSol.setVisible(True)
-        elif self.ICMP_Type.currentText() == '136 - Neighbor Advertisement':
-            self.NH_ICMP_NeighborAdv.setVisible(True)
-        elif self.ICMP_Type.currentText() == 'other ICMP Type':
-            self.NH_ICMP_otherType.setVisible(True)
+        if self.ICMP_Type.currentText() == '1 - Destination Unreachable': self.NH_ICMP_DestUnreach.setVisible(True)
+        elif self.ICMP_Type.currentText() == '2 - Packet Too Big': self.NH_ICMP_PTB.setVisible(True)
+        elif self.ICMP_Type.currentText() == '3 - Time Exceeded': self.NH_ICMP_TimeExceeded.setVisible(True)
+        elif self.ICMP_Type.currentText() == '4 - Parameter Problem': self.NH_ICMP_ParamProblem.setVisible(True)
+        elif self.ICMP_Type.currentText() == '128 - Echo Request': self.NH_ICMP_Ping.setVisible(True)
+        elif self.ICMP_Type.currentText() == '129 - Echo Reply': self.NH_ICMP_EchoReply.setVisible(True)
+        elif self.ICMP_Type.currentText() == '130 - Multicast Listener Query': self.NH_ICMP_MultiQuery.setVisible(True)
+        elif self.ICMP_Type.currentText() == '131 - Multicast Listener Report': self.NH_ICMP_MultiReport.setVisible(True)
+        elif self.ICMP_Type.currentText() == '132 - Multicast Listener Done': self.NH_ICMP_MultiDone.setVisible(True)
+        elif self.ICMP_Type.currentText() == '133 - Router Solicitation': self.NH_ICMP_RouterSol.setVisible(True)
+        elif self.ICMP_Type.currentText() == '134 - Router Advertisement': self.NH_ICMP_RouterAdv.setVisible(True)
+        elif self.ICMP_Type.currentText() == '135 - Neighbor Solicitation': self.NH_ICMP_NeighborSol.setVisible(True)
+        elif self.ICMP_Type.currentText() == '136 - Neighbor Advertisement': self.NH_ICMP_NeighborAdv.setVisible(True)
+        elif self.ICMP_Type.currentText() == '137 - Redirect': self.NH_ICMP_Redirect.setVisible(True)
+        elif self.ICMP_Type.currentText() == 'other ICMP Type': self.NH_ICMP_otherType.setVisible(True)
 
     def makeActions(self):
         """This function is use to connect the menubar with actions.
@@ -776,6 +894,10 @@ Then you can change the whole extension header or only the values of your extens
         for address in uniqueAddr:
             if self.IPv6DstList.contains(address) == False:
                 self.IPv6_DstAddr.addItem(str(address)) 
+                self.NH_ICMP_NeighborAdv_tgtAddr.addItem(str(address))
+                self.NH_ICMP_NeighborSol_tgtAddr.addItem(str(address))
+                self.NH_ICMP_Redirect_tgtAddr.addItem(str(address))
+                self.NH_ICMP_Redirect_DstAddr.addItem(str(address))
                 self.IPv6DstList.append(str(address))
 
     def slotRoundTrip(self):
@@ -841,6 +963,10 @@ Then you can change the whole extension header or only the values of your extens
         if self.IPv6.IPHdr['SrcIPAddr'] == None: self.IPv6_SrcAddr.setEditText('')
         else: self.IPv6_SrcAddr.setEditText(str(self.IPv6.IPHdr['SrcIPAddr']))
         self.IPv6_HopLimit.setText(str(self.IPv6.IPHdr['HopLimit']))
+        self.IPv6_TrafficClass.setText(str(self.IPv6.IPHdr['TrafficClass']))
+        self.IPv6_FlowLabel.setText(str(self.IPv6.IPHdr['FlowLabel']))
+        self.IPv6_Button_ExpertMode.setChecked(self.IPv6.IPHdr['ExpertMode'])
+        self.IPv6_ExpertMode.setVisible(self.IPv6.IPHdr['ExpertMode'])
         for num in range(0, self.ExtHdr_tableWidget.rowCount()): self.ExtHdr_tableWidget.removeRow(0)
         for num in range(0, len(self.IPv6.ExtHdr)-1):
             self.ExtHdr_tableWidget.insertRow(num)
@@ -858,6 +984,7 @@ Then you can change the whole extension header or only the values of your extens
                 self.NH_ICMP_DestUnreach_PacketNo.setText(self.IPv6.Payload['Packet No.'])
             elif self.IPv6.ICMP['indize'] == 2:
                 self.ICMP_Type.setCurrentIndex(self.ICMP_Type.findText('2 - Packet Too Big'))
+                self.NH_ICMP_PTB_Code.setText(self.IPv6.ICMP['Code'])
                 self.NH_ICMP_PTB_MTU.setText(self.IPv6.PTB['MTU'])
                 self.NH_ICMP_PTB_PacketFile.setText(self.IPv6.Payload['Capture File'])
                 self.NH_ICMP_PTB_PacketNo.setText(self.IPv6.Payload['Packet No.'])
@@ -878,6 +1005,16 @@ Then you can change the whole extension header or only the values of your extens
             elif self.IPv6.ICMP['indize'] == 129:
                 self.ICMP_Type.setCurrentIndex(self.ICMP_Type.findText('129 - Echo Reply'))
                 self.NH_ICMP_EchoReply_Message.setPlainText(self.IPv6.ICMP['Message'])
+            elif self.IPv6.ICMP['indize'] == 130:
+                self.ICMP_Type.setCurrentIndex(self.ICMP_Type.findText('130 - Multicast Listener Query'))
+                self.NH_ICMP_MultiQuery_MRD.setText(self.IPv6.ICMP['MRD'])
+                self.NH_ICMP_MultiQuery_MLAddr.setEditText(str(self.IPv6.ICMP['MLAddr']))
+            elif self.IPv6.ICMP['indize'] == 131:
+                self.ICMP_Type.setCurrentIndex(self.ICMP_Type.findText('131 - Multicast Listener Report'))
+                self.NH_ICMP_MultiReport_MLAddr.setEditText(str(self.IPv6.ICMP['MLAddr']))
+            elif self.IPv6.ICMP['indize'] == 132:
+                self.ICMP_Type.setCurrentIndex(self.ICMP_Type.findText('132 - Multicast Listener Done'))
+                self.NH_ICMP_MultiDone_MLAddr.setEditText(str(self.IPv6.ICMP['MLAddr']))
             elif self.IPv6.ICMP['indize'] == 133:
                 self.ICMP_Type.setCurrentIndex(self.ICMP_Type.findText('133 - Router Solicitation'))
             elif self.IPv6.ICMP['indize'] == 134:
@@ -888,7 +1025,7 @@ Then you can change the whole extension header or only the values of your extens
                 self.NH_ICMP_RouterAdv_RLTime.setText(self.IPv6.RAconf['RLTime'])
                 self.NH_ICMP_RouterAdv_LLSrcAddr.setEditText(self.IPv6.RAconf['RA_LLSrcAddr'])
                 self.NH_ICMP_RouterAdv_MFlag.setChecked(self.IPv6.RAconf['M'])
-                self.NH_ICMP_RouterAdv_OFlag.setChecked(self.IPv6.RAconf['O'])  
+                self.NH_ICMP_RouterAdv_OFlag.setChecked(self.IPv6.RAconf['O'])
             elif self.IPv6.ICMP['indize'] == 135:
                 self.ICMP_Type.setCurrentIndex(self.ICMP_Type.findText('135 - Neighbor Solicitation'))
                 self.NH_ICMP_NeighborSol_tgtAddr.setEditText( self.IPv6.NSconf['NS_tgtAddr'])
@@ -898,6 +1035,10 @@ Then you can change the whole extension header or only the values of your extens
                 self.NH_ICMP_NeighborAdv_RFlag.setChecked(self.IPv6.NAconf['R'])
                 self.NH_ICMP_NeighborAdv_SFlag.setChecked(self.IPv6.NAconf['S'])
                 self.NH_ICMP_NeighborAdv_OFlag.setChecked(self.IPv6.NAconf['O'])  
+            elif self.IPv6.ICMP['indize'] == 137:
+                self.ICMP_Type.setCurrentIndex(self.ICMP_Type.findText('137 - Redirect'))
+                self.NH_ICMP_Redirect_tgtAddr.setEditText(self.IPv6.Redirect['Re_tgtAddr'])
+                self.NH_ICMP_Redirect_DstAddr.setEditText(self.IPv6.Redirect['Re_DstAddr'])
             elif self.IPv6.ICMP['indize'] == 256:
                 self.ICMP_Type.setCurrentIndex(self.ICMP_Type.findText('other ICMP Type'))
                 self.NH_ICMP_otherType_Type.setText(self.IPv6.ICMP['Type'])
@@ -995,6 +1136,9 @@ options::
         self.IPv6.IPHdr['DstIPAddr'] = str(self.IPv6_DstAddr.currentText())
         self.IPv6.IPHdr['SrcIPAddr'] = str(self.IPv6_SrcAddr.currentText())
         self.IPv6.IPHdr['HopLimit'] = int(self.IPv6_HopLimit.text())
+        self.IPv6.IPHdr['TrafficClass'] = int(self.IPv6_TrafficClass.text())
+        self.IPv6.IPHdr['FlowLabel'] = int(self.IPv6_FlowLabel.text())
+        self.IPv6.IPHdr['ExpertMode'] = self.IPv6_Button_ExpertMode.isChecked()
         if self.IPv6.EthHdr['LLDstAddr'] == 'ff:ff:ff:ff:ff:ff': self.IPv6.EthHdr['LLDstAddr'] = None
         if self.IPv6.EthHdr['LLSrcAddr'] == ':::::': self.IPv6.EthHdr['LLSrcAddr'] = None
         if self.IPv6.IPHdr['SrcIPAddr'] == '': self.IPv6.IPHdr['SrcIPAddr'] = None
@@ -1005,6 +1149,7 @@ options::
             self.IPv6.indize = 0
             if self.ICMP_Type.currentText() == '1 - Destination Unreachable':
                 self.IPv6.ICMP['indize'] = 1
+                if self.NH_ICMP_DestUnreach_Code.text() == '': self.NH_ICMP_DestUnreach_Code.setText(self.IPv6.ICMP['Code'])
                 self.IPv6.ICMP['Code'] = self.NH_ICMP_DestUnreach_Code.text()
                 self.IPv6.Payload['Capture File'] = self.NH_ICMP_DestUnreach_PacketFile.text()
                 self.IPv6.Payload['Packet No.'] = self.NH_ICMP_DestUnreach_PacketNo.text()
@@ -1013,6 +1158,9 @@ options::
                     return
             if self.ICMP_Type.currentText() == '2 - Packet Too Big':
                 self.IPv6.ICMP['indize'] = 2
+                if self.NH_ICMP_PTB_Code.text() == '': self.NH_ICMP_PTB_Code.setText(self.IPv6.ICMP['Code'])
+                if self.NH_ICMP_PTB_MTU.text() == '': self.NH_ICMP_PTB_MTU.setText(self.IPv6.PTB['MTU'])
+                self.IPv6.ICMP['Code'] = self.NH_ICMP_PTB_Code.text()
                 self.IPv6.PTB['MTU'] = self.NH_ICMP_PTB_MTU.text()
                 self.IPv6.Payload['Capture File'] = self.NH_ICMP_PTB_PacketFile.text()
                 self.IPv6.Payload['Packet No.'] = self.NH_ICMP_PTB_PacketNo.text()
@@ -1021,6 +1169,7 @@ options::
                     return
             if self.ICMP_Type.currentText() == '3 - Time Exceeded':
                 self.IPv6.ICMP['indize'] = 3
+                if self.NH_ICMP_TimeExceeded_Code.text() == '': self.NH_ICMP_TimeExceeded_Code.setText(self.IPv6.ICMP['Code'])
                 self.IPv6.ICMP['Code'] = self.NH_ICMP_TimeExceeded_Code.text()
                 self.IPv6.Payload['Capture File'] = self.NH_ICMP_TimeExceeded_PacketFile.text()
                 self.IPv6.Payload['Packet No.'] = self.NH_ICMP_TimeExceeded_PacketNo.text()
@@ -1029,6 +1178,8 @@ options::
                     return
             if self.ICMP_Type.currentText() == '4 - Parameter Problem':
                 self.IPv6.ICMP['indize'] = 4
+                if self.NH_ICMP_ParamProblem_Code.text() == '': self.NH_ICMP_ParamProblem_Code.setText(self.IPv6.ICMP['Code'])
+                if self.NH_ICMP_ParamProblem_Pointer.text() == '': self.NH_ICMP_ParamProblem_Pointer.setText(elf.IPv6.ICMP['Pointer'])
                 self.IPv6.ICMP['Code'] = self.NH_ICMP_ParamProblem_Code.text()
                 self.IPv6.ICMP['Pointer'] = self.NH_ICMP_ParamProblem_Pointer.text()
                 self.IPv6.Payload['Capture File'] = self.NH_ICMP_ParamProblem_PacketFile.text()
@@ -1042,6 +1193,17 @@ options::
             elif self.ICMP_Type.currentText() == '129 - Echo Reply':
                 self.IPv6.ICMP['indize'] = 129
                 self.IPv6.ICMP['Message'] = str(self.NH_ICMP_EchoReply_Message.toPlainText())
+            elif self.ICMP_Type.currentText() == '130 - Multicast Listener Query':         
+                self.IPv6.ICMP['indize'] = 130
+                if self.NH_ICMP_MultiQuery_MRD.text() == '': self.NH_ICMP_MultiQuery_MRD.setText(self.IPv6.ICMP['MRD'])
+                self.IPv6.ICMP['MRD'] = self.NH_ICMP_MultiQuery_MRD.text()
+                self.IPv6.ICMP['MLAddr'] = str(self.NH_ICMP_MultiQuery_MLAddr.currentText())
+            elif self.ICMP_Type.currentText() == '131 - Multicast Listener Report':
+                self.IPv6.ICMP['indize'] = 131
+                self.IPv6.ICMP['MLAddr'] = str(self.NH_ICMP_MultiReport_MLAddr.currentText())
+            elif self.ICMP_Type.currentText() == '132 - Multicast Listener Done':
+                self.IPv6.ICMP['indize'] = 132
+                self.IPv6.ICMP['MLAddr'] = str(self.NH_ICMP_MultiDone_MLAddr.currentText())
             elif self.ICMP_Type.currentText() == '133 - Router Solicitation':
                 self.IPv6.ICMP['indize'] = 133
             elif self.ICMP_Type.currentText() == '134 - Router Advertisement':
@@ -1073,15 +1235,21 @@ options::
                 if self.IPv6.NAconf['NA_tgtAddr'] == '': self.IPv6.NAconf['NA_tgtAddr'] = ':::::'
                 self.IPv6.NAconf['R'] = self.NH_ICMP_NeighborAdv_RFlag.isChecked()
                 self.IPv6.NAconf['S'] = self.NH_ICMP_NeighborAdv_SFlag.isChecked()
-                self.IPv6.NAconf['O'] = self.NH_ICMP_NeighborAdv_OFlag.isChecked()  
+                self.IPv6.NAconf['O'] = self.NH_ICMP_NeighborAdv_OFlag.isChecked()
+            elif self.ICMP_Type.currentText() == '137 - Redirect':
+                self.IPv6.ICMP['indize'] = 137
+                if self.NH_ICMP_Redirect_tgtAddr.currentText() == '': self.NH_ICMP_Redirect_tgtAddr.setEditText('::')
+                if self.NH_ICMP_Redirect_DstAddr.currentText() == '': self.NH_ICMP_Redirect_DstAddr.setEditText('::')
+                self.IPv6.Redirect['Re_tgtAddr'] = str(self.NH_ICMP_Redirect_tgtAddr.currentText())
+                self.IPv6.Redirect['Re_DstAddr'] = str(self.NH_ICMP_Redirect_DstAddr.currentText())
             elif self.ICMP_Type.currentText() == 'other ICMP Type':
                 self.IPv6.ICMP['indize'] = 256
+                if self.NH_ICMP_otherType_Type.text() == '': self.NH_ICMP_otherType_Type.setText(self.IPv6.ICMP['Type'])
+                if self.NH_ICMP_otherType_Code.text() == '': self.NH_ICMP_otherType_Code.setText(self.IPv6.ICMP['Code'])
                 self.IPv6.ICMP['Type'] = self.NH_ICMP_otherType_Type.text()
                 self.IPv6.ICMP['Code'] = self.NH_ICMP_otherType_Code.text()
-                if self.IPv6.ICMP['Type'] == '':self.IPv6.ICMP['Type'] = '1'
-                if self.IPv6.ICMP['Code'] == '': self.IPv6.ICMP['Code'] = '0'
                 self.IPv6.ICMP['Message'] = str(self.NH_ICMP_otherType_Message.toPlainText())
-
+            if self.IPv6.ICMP['MLAddr'] == '': self.IPv6.ICMP['MLAddr'] = '::'
         elif self.NextHeader_Type.currentText() == 'TCP':
             self.IPv6.indize = 1
             if self.NH_TCP_SrcPort.text() == '': self.NH_TCP_SrcPort.setText('20')
