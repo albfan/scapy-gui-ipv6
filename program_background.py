@@ -40,8 +40,8 @@
 ##                                                                      #
 #########################################################################
 ##                                                                      #
-## Version: 2.1                                                         #
-## Date:    09.11.2011                                                  #
+## Version: 2.2                                                         #
+## Date:    23.11.2011                                                  #
 ##                                                                      #
 #########################################################################
 
@@ -82,9 +82,9 @@ class IPv6Packet:
                                 4 = Parameter Problem
                                 128 = Echo Request
                                 129 = Echo Reply
-                                130 - Multicast Listener Query
-                                131 - Multicast Listener Report
-                                132 - Multicast Listener Done
+                                130 = Multicast Listener Query
+                                131 = Multicast Listener Report
+                                132 = Multicast Listener Done
                                 133 = Router Solicitation
                                 134 = Router Advertisement
                                 135 = Neighbor Solicitation
@@ -109,9 +109,10 @@ class IPv6Packet:
     IPHdr = {'SrcIPAddr': None, 'DstIPAddr': None, 'HopLimit': 64, 'TrafficClass': 0, 'FlowLabel': 0 , 'ExpertMode': False}
     ExtHdr = [['','','','']]
     indize = 0
-    RAconf = {'Prefix':'fd00:141:64:1::','Prefixlen':'64','RA_LLSrcAddr':'', 'M': False, 'O': False, 'RLTime':'1800', 'CHLim': '255'}
+    RAconf = {'M': False, 'O': False, 'RLTime':'1800', 'CHLim': '255'}
     NSconf = {'NS_tgtAddr': '::'}
-    NAconf = {'NA_tgtAddr': '::', 'R' : True, 'S' : False, 'O' : True}
+    NAconf = {'NA_tgtAddr': '::', 'R': True, 'S': False, 'O': True}
+    NDOpt = {'Option': '0', 'ND_SrcLLAddr': '00:00:00:00:00:00', 'ND_DstLLAddr': 'FF:FF:FF:FF:FF:FF', 'MTU': 1280, 'Prefix': 'fd00:141:64:1::', 'Prefixlen':'64', 'L': True, 'A': True, 'ValidL': '4294967295', 'PreferredL': '4294967295'}
     Redirect = {'Re_tgtAddr': '::', 'Re_DstAddr': '::'}
     ICMP = {'indize': 128, 'Type': '1', 'Code': '0', 'Message': '', 'Pointer': '6', 'MRD': 10000, 'MLAddr': '::'}
     PTB = {'MTU': '1280'}
@@ -186,7 +187,7 @@ class Buildit:
             Interface = None
 
         ##########
-        ## send or save (pcap og Clipbord)
+        ## send or save (pcap or Clipbord)
 		
         if self.IPv6packet['ExtHeader'] == (None or '') and self.IPv6packet['NextHeader'] != None:
             self.IPv6Scapy = (self.IPv6packet['EthHeader']/self.IPv6packet['IPHeader']/self.IPv6packet['NextHeader'])
@@ -226,13 +227,16 @@ class Buildit:
                 
         elif Option == 1:
             ## save as .pcap
-			
             wrpcap(File, self.IPv6Scapy)
                 
-        else:
+        elif Option == 2:
             ## save to Clipboard
             Clipboard = QtGui.QApplication.clipboard()
             Clipboard.setText(Command)
+                
+        elif Option == 4:
+            ## save as .pdf
+            self.IPv6Scapy.pdfdump(str(File), layer_shift=5)
 
         ## show sourcecode
         disp_sourcecode = QtGui.QMessageBox.information(None, "Scapy Quellcode", "Scapy Quellcode:\n\n%s" % Command )
@@ -307,9 +311,9 @@ class Buildit:
              4 = Parameter Problem
              128 = Echo Request
              129 = Echo Reply
-             130 - Multicast Listener Query
-             131 - Multicast Listener Report
-             132 - Multicast Listener Done
+             130 = Multicast Listener Query
+             131 = Multicast Listener Report
+             132 = Multicast Listener Done
              133 = Router Solicitation
              134 = Router Advertisement
              135 = Neighbor Solicitation
@@ -349,6 +353,8 @@ class Buildit:
                 NextHeader = self.BuildICMPv6_Redirect()
             elif self.IPv6.ICMP['indize'] == 256:      # ICMP Unknown
                 NextHeader = self.BuildICMPv6_Unknown()
+            if self.IPv6.ICMP['indize'] == 133 or 134 or 135 or 136 or 137:      # ND Option
+                NextHeader = self.BuildICMPv6_NDOpt(NextHeader)
         elif self.IPv6.indize == 1:             # TCP
             NextHeader = self.BuildTCP()
         elif self.IPv6.indize == 2:             # UDP
@@ -474,21 +480,7 @@ This values are saved in the IPv6 array ``IPv6.RAconf``
                        routerlifetime=int(self.IPv6.RAconf['RLTime']), P=0L, retranstimer=0, prf=0L,
                        res=0L)
 
-        prefix_info=ICMPv6NDOptPrefixInfo(A=1L, res2=0, res1=0L, L=1L,
-                                          len=4,
-                                          prefix=str(self.IPv6.RAconf['Prefix']),
-                                          R=0L, validlifetime=1814400,
-                                          prefixlen=int(self.IPv6.RAconf['Prefixlen']),
-                                          preferredlifetime=604800, type=3)
-
-        ## if source link-layer-addr set
-
-        if (self.IPv6.RAconf['RA_LLSrcAddr'] != (None or '')):
-            llad=ICMPv6NDOptSrcLLAddr(type=1, len=1,
-                                      lladdr=str(self.IPv6.RAconf['RA_LLSrcAddr']))
-            return(ra/prefix_info/llad)
-        else:
-            return(ra/prefix_info)
+        return(ra)
 
     ## Neighbor Solicitation
 
@@ -560,6 +552,42 @@ This values are saved in the IPv6 array ``IPv6.ICMP``
 """
         q = ICMPv6Unknown(type=int(self.IPv6.ICMP['Type']), code=int(self.IPv6.ICMP['Code']), msgbody=self.IPv6.ICMP['Message'])
         return(q)
+
+    ## Neighbor Disvovery Options
+
+    def BuildICMPv6_NDOpt(self, NextHeader):
+        """This function adds Neightbor Discovery Options to the ICMPv6 typs 133, 134, 135, 136 and 137.
+The options has to be choosen at the GUI.
+"""
+        binOpt = ''.join(bin(int(self.IPv6.NDOpt['Option'])).split('0b'))
+        while len(binOpt)<5: binOpt = '0' + binOpt # binary Value with a length of 5
+        if str(binOpt)[0] == '1':
+            sll = ICMPv6NDOptSrcLLAddr(lladdr=str(self.IPv6.NDOpt['ND_SrcLLAddr']))
+            NextHeader = NextHeader/ sll
+        if str(binOpt)[1] == '1':
+            dll = ICMPv6NDOptDstLLAddr(lladdr=str(self.IPv6.NDOpt['ND_DstLLAddr']))
+            NextHeader = NextHeader/ dll
+        if str(binOpt)[2] == '1': 
+            pre = ICMPv6NDOptPrefixInfo(L=self.IPv6.NDOpt['L'], A=self.IPv6.NDOpt['A'], 
+                                        prefix=str(self.IPv6.NDOpt['Prefix']), 
+                                        validlifetime=int(self.IPv6.NDOpt['ValidL']), 
+                                        prefixlen=int(self.IPv6.NDOpt['Prefixlen']), 
+                                        preferredlifetime=int(self.IPv6.NDOpt['PreferredL']))
+            NextHeader = NextHeader/ pre
+        if str(binOpt)[3] == '1':
+            path = self.IPv6.Payload['Capture File']
+            capture = rdpcap(str(path))
+            PCAPno = self.IPv6.Payload['Packet No.']
+            if PCAPno != '':
+                no = int(PCAPno)-1
+            else:
+                no = 0
+            red = ICMPv6NDOptRedirectedHdr(pkt=capture[no][IPv6])
+            NextHeader = NextHeader/ red
+        if str(binOpt)[4] == '1':
+            mtu = ICMPv6NDOptMTU(mtu=int(self.IPv6.NDOpt['MTU']))
+            NextHeader = NextHeader/ mtu
+        return (NextHeader)
 
     ## TCP
 

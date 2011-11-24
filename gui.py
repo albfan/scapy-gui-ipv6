@@ -40,8 +40,8 @@
 ##                                                                      #
 #########################################################################
 ##                                                                      #
-## Version: 2.1                                                         #
-## Date:    09.11.2011                                                  #
+## Version: 2.2                                                         #
+## Date:    23.11.2011                                                  #
 ##                                                                      #
 #########################################################################
 
@@ -56,7 +56,13 @@ class Main(QtGui.QMainWindow):
     def __init__(self):
         QtGui.QMainWindow.__init__(self)
         self.setWindowTitle("Scapy GUI")
-        self.resize(600, 370)
+        self.setMinimumWidth(600)
+        self.setMinimumHeight(370)
+        width = 600     # min. 600
+        height = 370     # min. 370
+        if width < self.minimumWidth(): width = self.minimumWidth()
+        if height < self.minimumHeight(): height = self.minimumHeight()
+        self.resize(width, height)
         self.makeActions()
         self.makeMenu()
 
@@ -65,7 +71,7 @@ class Main(QtGui.QMainWindow):
 
         # TabWidget
         self.tabWidget = QtGui.QTabWidget(self)
-        self.tabWidget.setGeometry(QtCore.QRect(0, 30, 600, 300))
+        self.tabWidget.setGeometry(QtCore.QRect(0, 30, width, height-70))
 
 	        # First Tab - Ethernet Header
         self.tab_EthH = QtGui.QWidget(self.tabWidget)
@@ -148,14 +154,14 @@ class Main(QtGui.QMainWindow):
         self.tabWidget.addTab(self.tab_ExtHdr, "Extension Header")
         self.ExtHdr_tableWidget = QtGui.QTableWidget(0, 1, self.tab_ExtHdr)
         self.ExtHdr_tableWidget.setHorizontalHeaderLabels(["Extension Header"])
-        self.ExtHdr_tableWidget.setColumnWidth(0,251)
-        self.ExtHdr_tableWidget.setGeometry(QtCore.QRect(130, 10, 250, 250))
+        self.ExtHdr_tableWidget.setColumnWidth(0, 251)
+        self.ExtHdr_tableWidget.setGeometry(QtCore.QRect(width/2 - 170, 10, 250, height - 120 ))
         self.ExtHdr_AddButton = QtGui.QPushButton("Add", self.tab_ExtHdr)
-        self.ExtHdr_AddButton.move(420, 50)
+        self.ExtHdr_AddButton.move(width/2 + 120, 50)
         self.ExtHdr_EditButton = QtGui.QPushButton("Edit", self.tab_ExtHdr)
-        self.ExtHdr_EditButton.move(420, 80)
+        self.ExtHdr_EditButton.move(width/2 + 120, 80)
         self.ExtHdr_DeleteButton = QtGui.QPushButton("Delete", self.tab_ExtHdr)
-        self.ExtHdr_DeleteButton.move(420, 110)
+        self.ExtHdr_DeleteButton.move(width/2 + 120, 110)
         self.connect(self.ExtHdr_AddButton, QtCore.SIGNAL('clicked(bool)'), self.slotAddExtHdr)
         self.connect(self.ExtHdr_EditButton, QtCore.SIGNAL('clicked(bool)'), self.slotEditExtHdr)
         self.connect(self.ExtHdr_DeleteButton, QtCore.SIGNAL('clicked(bool)'), self.slotDeleteExtHdr)
@@ -172,7 +178,7 @@ class Main(QtGui.QMainWindow):
 
                 # ICMP Typ
         self.tab_NH_ICMP = QtGui.QWidget(self.tab_NextHeader)
-        self.tab_NH_ICMP.setGeometry(QtCore.QRect(0, 50, 600, 280))
+        self.tab_NH_ICMP.setGeometry(QtCore.QRect(0, 50, width, height - 120))
         self.tab_NH_ICMP.setVisible(True)
         self.ICMP_Type = QtGui.QComboBox(self.tab_NextHeader)
         self.ICMP_Type.addItem('1 - Destination Unreachable')
@@ -197,7 +203,6 @@ class Main(QtGui.QMainWindow):
                     # Destination Unreachable
 
         self.NH_ICMP_DestUnreach = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_DestUnreach.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_DestUnreach.setVisible(False) 
         self.Label = QtGui.QLabel("Code:", self.NH_ICMP_DestUnreach)
         self.Label.move(5, 10)
@@ -222,7 +227,6 @@ class Main(QtGui.QMainWindow):
                     # Packet Too Big
         
         self.NH_ICMP_PTB = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_PTB.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_PTB.setVisible(False)
         self.Label = QtGui.QLabel("Code:", self.NH_ICMP_PTB)
         self.Label.move(5, 10)
@@ -253,7 +257,6 @@ class Main(QtGui.QMainWindow):
                     # Time Exceeded
 
         self.NH_ICMP_TimeExceeded = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_TimeExceeded.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_TimeExceeded.setVisible(False) 
         self.Label = QtGui.QLabel("Code:", self.NH_ICMP_TimeExceeded)
         self.Label.move(5, 10)
@@ -278,7 +281,6 @@ class Main(QtGui.QMainWindow):
                     # Parameter Problem
 
         self.NH_ICMP_ParamProblem = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_ParamProblem.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_ParamProblem.setVisible(False) 
         self.Label = QtGui.QLabel("Code:", self.NH_ICMP_ParamProblem)
         self.Label.move(5, 10)
@@ -310,8 +312,6 @@ class Main(QtGui.QMainWindow):
                     # Echo Request
 
         self.NH_ICMP_Ping = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_Ping.setGeometry(QtCore.QRect(0, 0, 600, 210))
-        self.NH_ICMP_Ping.setVisible(True)
         self.Label_3 = QtGui.QLabel("Message:", self.NH_ICMP_Ping)
         self.Label_3.move(5, 50)
         self.NH_ICMP_Ping_Message = QtGui.QTextEdit("", self.NH_ICMP_Ping)
@@ -320,7 +320,6 @@ class Main(QtGui.QMainWindow):
                     # Echo Reply
 
         self.NH_ICMP_EchoReply = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_EchoReply.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_EchoReply.setVisible(False)
         self.Label_3 = QtGui.QLabel("Message:", self.NH_ICMP_EchoReply)
         self.Label_3.move(5, 50)
@@ -330,7 +329,6 @@ class Main(QtGui.QMainWindow):
                     # Multicast Listener Query
 
         self.NH_ICMP_MultiQuery = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_MultiQuery.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_MultiQuery.setVisible(False)
         self.Label = QtGui.QLabel("Maximum Response Delay:", self.NH_ICMP_MultiQuery)
         self.Label.move(5, 10)
@@ -352,7 +350,6 @@ class Main(QtGui.QMainWindow):
                     # Multicast Listener Report
 
         self.NH_ICMP_MultiReport = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_MultiReport.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_MultiReport.setVisible(False)
         self.Label = QtGui.QLabel("Multicast Listener Address:", self.NH_ICMP_MultiReport)
         self.Label.move(5, 105)
@@ -368,7 +365,6 @@ class Main(QtGui.QMainWindow):
                     # Multicast Listener Done
 
         self.NH_ICMP_MultiDone = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_MultiDone.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_MultiDone.setVisible(False)
         self.Label = QtGui.QLabel("Multicast Listener Address:", self.NH_ICMP_MultiDone)
         self.Label.move(5, 105)
@@ -384,37 +380,28 @@ class Main(QtGui.QMainWindow):
                     # Router Solicitation
 
         self.NH_ICMP_RouterSol = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_RouterSol.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_RouterSol.setVisible(False)
+        self.NH_ICMP_RouterSol.setGeometry(QtCore.QRect(0, 0, width, height - 120))
+        self.NH_ICMP_RouterSol_Options = QtGui.QPushButton("Neighbor Discovery Options",self.NH_ICMP_RouterSol)
+        self.NH_ICMP_RouterSol_Options.move(10, 180)
+        self.connect(self.NH_ICMP_RouterSol_Options, QtCore.SIGNAL('clicked()'), self.slotNDOptHdr)
 
                     # Router Advertisement
 
         self.NH_ICMP_RouterAdv = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_RouterAdv.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_RouterAdv.setVisible(False)
-        self.Label = QtGui.QLabel("Prefix:", self.NH_ICMP_RouterAdv)
+        self.NH_ICMP_RouterAdv.setGeometry(QtCore.QRect(0, 0, width, height - 120))
+        self.Label = QtGui.QLabel("Cur Hop Limit:", self.NH_ICMP_RouterAdv)
         self.Label.move(5, 10)
-        self.Label_2 = QtGui.QLabel("Prefix lenght:", self.NH_ICMP_RouterAdv)
-        self.Label_2.move(205, 10)
-        self.NH_ICMP_RouterAdv_Prefix = QtGui.QLineEdit(self.NH_ICMP_RouterAdv)
-        self.NH_ICMP_RouterAdv_Prefix.setGeometry(QtCore.QRect(10, 35, 150, 30))
-        self.NH_ICMP_RouterAdv_Prefix.setText(self.IPv6.RAconf['Prefix'])
-        self.NH_ICMP_RouterAdv_PrefixLen = QtGui.QLineEdit(self.NH_ICMP_RouterAdv)
-        self.NH_ICMP_RouterAdv_PrefixLen.setGeometry(QtCore.QRect(210, 35, 60, 30)) 
-        self.NH_ICMP_RouterAdv_PrefixLen.setText(self.IPv6.RAconf['Prefixlen'])
-        self.NH_ICMP_RouterAdv_PrefixLen.setInputMask('999')
-        self.connect(self.NH_ICMP_RouterAdv_PrefixLen, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_7)
-        self.Label_3 = QtGui.QLabel("Cur Hop Limit:", self.NH_ICMP_RouterAdv)
-        self.Label_3.move(325, 10)
         self.NH_ICMP_RouterAdv_CHLim = QtGui.QLineEdit(self.NH_ICMP_RouterAdv)
-        self.NH_ICMP_RouterAdv_CHLim.setGeometry(QtCore.QRect(330, 35, 60, 30))
+        self.NH_ICMP_RouterAdv_CHLim.setGeometry(QtCore.QRect(10, 35, 60, 30))
         self.NH_ICMP_RouterAdv_CHLim.setText(self.IPv6.RAconf['CHLim'])
         self.NH_ICMP_RouterAdv_CHLim.setInputMask('999')
         self.connect(self.NH_ICMP_RouterAdv_CHLim, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_8)
-        self.Label_4 = QtGui.QLabel("Router Life Time:", self.NH_ICMP_RouterAdv)
-        self.Label_4.move(455, 10)
+        self.Label_2 = QtGui.QLabel("Router Life Time:", self.NH_ICMP_RouterAdv)
+        self.Label_2.move(145, 10)
         self.NH_ICMP_RouterAdv_RLTime = QtGui.QLineEdit(self.NH_ICMP_RouterAdv)
-        self.NH_ICMP_RouterAdv_RLTime.setGeometry(QtCore.QRect(460, 35, 60, 30))
+        self.NH_ICMP_RouterAdv_RLTime.setGeometry(QtCore.QRect(150, 35, 60, 30))
         self.NH_ICMP_RouterAdv_RLTime.setText(self.IPv6.RAconf['RLTime'])
         self.NH_ICMP_RouterAdv_RLTime.setInputMask('99999')
         self.connect(self.NH_ICMP_RouterAdv_RLTime, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_16)
@@ -424,25 +411,13 @@ class Main(QtGui.QMainWindow):
         self.NH_ICMP_RouterAdv_OFlag = QtGui.QCheckBox("Other configuration - flag", self.NH_ICMP_RouterAdv)
         self.NH_ICMP_RouterAdv_OFlag.move(10, 100)
         self.NH_ICMP_RouterAdv_OFlag.setChecked(self.IPv6.RAconf['O'])
-
-        self.NH_ICMP_RouterAdv_line = QtGui.QFrame(self.NH_ICMP_RouterAdv)
-        self.NH_ICMP_RouterAdv_line.setGeometry(QtCore.QRect(5, 130, 590, 2))
-        self.NH_ICMP_RouterAdv_line.setFrameShape(QtGui.QFrame.HLine)
-        self.NH_ICMP_RouterAdv_line.setFrameShadow(QtGui.QFrame.Sunken)
-
-        self.Label_5 = QtGui.QLabel("ICMPv6 Option Source Link-Layer-Address (optional):", self.NH_ICMP_RouterAdv)
-        self.Label_5.move(5, 140)
-        self.NH_ICMP_RouterAdv_LLSrcAddr_help = QtGui.QLineEdit(self.NH_ICMP_RouterAdv)
-        self.NH_ICMP_RouterAdv_LLSrcAddr_help.setInputMask('HH:HH:HH:HH:HH:HH')
-        self.NH_ICMP_RouterAdv_LLSrcAddr = QtGui.QComboBox(self.NH_ICMP_RouterAdv)
-        self.NH_ICMP_RouterAdv_LLSrcAddr.setGeometry(QtCore.QRect(10, 165, 300, 30))
-        self.NH_ICMP_RouterAdv_LLSrcAddr.setLineEdit(self.NH_ICMP_RouterAdv_LLSrcAddr_help)
-        self.NH_ICMP_RouterAdv_LLSrcAddr.setEditable(True)
+        self.NH_ICMP_RouterAdv_Options = QtGui.QPushButton("Neighbor Discovery Options",self.NH_ICMP_RouterAdv)
+        self.NH_ICMP_RouterAdv_Options.move(10, 180)
+        self.connect(self.NH_ICMP_RouterAdv_Options, QtCore.SIGNAL('clicked()'), self.slotNDOptHdr)
 
                     # Neighbor Solicitation
         
         self.NH_ICMP_NeighborSol = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_NeighborSol.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_NeighborSol.setVisible(False)
         self.Label = QtGui.QLabel("Target IPv6 Address:", self.NH_ICMP_NeighborSol)
         self.Label.move(5, 10)
@@ -454,11 +429,13 @@ class Main(QtGui.QMainWindow):
         self.NH_ICMP_NeighborSol_tgtAddr.addItem('ff01::1')
         self.NH_ICMP_NeighborSol_tgtAddr.addItem('ff02::1')
         self.NH_ICMP_NeighborSol_tgtAddr.addItem('ff80::1')
+        self.NH_ICMP_NeighborSol_Options = QtGui.QPushButton("Neighbor Discovery Options",self.NH_ICMP_NeighborSol)
+        self.NH_ICMP_NeighborSol_Options.move(10, 180)
+        self.connect(self.NH_ICMP_NeighborSol_Options, QtCore.SIGNAL('clicked()'), self.slotNDOptHdr)
 
                     # Neighbor Advertisement
 
         self.NH_ICMP_NeighborAdv = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_NeighborAdv.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_NeighborAdv.setVisible(False)
         self.Label = QtGui.QLabel("Target IPv6 Address:", self.NH_ICMP_NeighborAdv)
         self.Label.move(5, 10)
@@ -478,16 +455,18 @@ class Main(QtGui.QMainWindow):
         self.NH_ICMP_NeighborAdv_OFlag = QtGui.QCheckBox("Override - flag", self.NH_ICMP_NeighborAdv)
         self.NH_ICMP_NeighborAdv_OFlag.move(10, 120)
         self.NH_ICMP_NeighborAdv_OFlag.setChecked(self.IPv6.NAconf['O'])
+        self.NH_ICMP_NeighborAdv_Options = QtGui.QPushButton("Neighbor Discovery Options",self.NH_ICMP_NeighborAdv)
+        self.NH_ICMP_NeighborAdv_Options.move(10, 180)
+        self.connect(self.NH_ICMP_NeighborAdv_Options, QtCore.SIGNAL('clicked()'), self.slotNDOptHdr)
         
                     # Redirect
         
         self.NH_ICMP_Redirect = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_Redirect.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_Redirect.setVisible(False)
         self.Label = QtGui.QLabel("Target Address:", self.NH_ICMP_Redirect)
         self.Label.move(5, 10)
         self.Label_2 = QtGui.QLabel("Destination Address:", self.NH_ICMP_Redirect)
-        self.Label_2.move(5, 100)
+        self.Label_2.move(5, 80)
         self.NH_ICMP_Redirect_tgtAddr = QtGui.QComboBox(self.NH_ICMP_Redirect)
         self.NH_ICMP_Redirect_tgtAddr.setGeometry(QtCore.QRect(10, 35, 300, 31))
         self.NH_ICMP_Redirect_tgtAddr.setEditable(True)
@@ -497,18 +476,20 @@ class Main(QtGui.QMainWindow):
         self.NH_ICMP_Redirect_tgtAddr.addItem('ff02::1')
         self.NH_ICMP_Redirect_tgtAddr.addItem('ff80::1')
         self.NH_ICMP_Redirect_DstAddr = QtGui.QComboBox(self.NH_ICMP_Redirect)
-        self.NH_ICMP_Redirect_DstAddr.setGeometry(QtCore.QRect(10, 130, 300, 31))
+        self.NH_ICMP_Redirect_DstAddr.setGeometry(QtCore.QRect(10, 105, 300, 31))
         self.NH_ICMP_Redirect_DstAddr.setEditable(True)
         self.NH_ICMP_Redirect_DstAddr.setDuplicatesEnabled(True)
         self.NH_ICMP_Redirect_DstAddr.addItem('::')
         self.NH_ICMP_Redirect_DstAddr.addItem('ff01::1')
         self.NH_ICMP_Redirect_DstAddr.addItem('ff02::1')
         self.NH_ICMP_Redirect_DstAddr.addItem('ff80::1')
+        self.NH_ICMP_Redirect_Options = QtGui.QPushButton("Neighbor Discovery Options",self.NH_ICMP_Redirect)
+        self.NH_ICMP_Redirect_Options.move(10, 180)
+        self.connect(self.NH_ICMP_Redirect_Options, QtCore.SIGNAL('clicked()'), self.slotNDOptHdr)
         
                     # other ICMP Type
         
         self.NH_ICMP_otherType = QtGui.QWidget(self.tab_NH_ICMP)
-        self.NH_ICMP_otherType.setGeometry(QtCore.QRect(0, 0, 600, 210))
         self.NH_ICMP_otherType.setVisible(False)
         self.Label = QtGui.QLabel("Type:", self.NH_ICMP_otherType)
         self.Label.move(80, 40)
@@ -529,41 +510,41 @@ class Main(QtGui.QMainWindow):
 
                 # TCP
         self.NH_TCP = QtGui.QWidget(self.tab_NextHeader)
-        self.NH_TCP.setGeometry(QtCore.QRect(0, 60, 600, 250))
+        self.NH_TCP.setGeometry(QtCore.QRect(0, 60, width, 250))
         self.NH_TCP.setVisible(False)
         self.NH_TCP_Label = QtGui.QLabel("Source Port:", self.NH_TCP)
-        self.NH_TCP_Label.move(30, 30)
+        self.NH_TCP_Label.move(width/2 - 270, 30)
         self.NH_TCP_SrcPort = QtGui.QLineEdit("20", self.NH_TCP)
-        self.NH_TCP_SrcPort.setGeometry(QtCore.QRect(150, 26, 60, 25))
+        self.NH_TCP_SrcPort.setGeometry(QtCore.QRect(width/2 - 150, 26, 60, 25))
         self.NH_TCP_Label_2 = QtGui.QLabel("Destination Port:", self.NH_TCP)
-        self.NH_TCP_Label_2.move(30, 70)
+        self.NH_TCP_Label_2.move(width/2 - 270, 70)
         self.NH_TCP_DstPort = QtGui.QLineEdit("80", self.NH_TCP)
-        self.NH_TCP_DstPort.setGeometry(QtCore.QRect(150, 66, 60, 25))
+        self.NH_TCP_DstPort.setGeometry(QtCore.QRect(width/2 - 150, 66, 60, 25))
         self.NH_TCP_Label_3 = QtGui.QLabel("Flags:", self.NH_TCP)
-        self.NH_TCP_Label_3.move(30, 120)
+        self.NH_TCP_Label_3.move(width/2 - 270, 120)
         self.NH_TCP_Flag_URG = QtGui.QRadioButton("URG", self.NH_TCP)
         self.NH_TCP_Flag_URG.setAutoExclusive(False)
-        self.NH_TCP_Flag_URG.move(50, 140)
+        self.NH_TCP_Flag_URG.move(width/2 - 250, 140)
         self.NH_TCP_Flag_ACK = QtGui.QRadioButton("ACK", self.NH_TCP)
         self.NH_TCP_Flag_ACK.setAutoExclusive(False)
-        self.NH_TCP_Flag_ACK.move(50, 160)
+        self.NH_TCP_Flag_ACK.move(width/2 - 250, 160)
         self.NH_TCP_Flag_PSH = QtGui.QRadioButton("PSH", self.NH_TCP)
         self.NH_TCP_Flag_PSH.setAutoExclusive(False)
-        self.NH_TCP_Flag_PSH.move(110, 140)
+        self.NH_TCP_Flag_PSH.move(width/2 - 190, 140)
         self.NH_TCP_Flag_RST = QtGui.QRadioButton("RST", self.NH_TCP)
         self.NH_TCP_Flag_RST.setAutoExclusive(False)
-        self.NH_TCP_Flag_RST.move(110, 160)
+        self.NH_TCP_Flag_RST.move(width/2 - 190, 160)
         self.NH_TCP_Flag_SYN = QtGui.QRadioButton("SYN", self.NH_TCP)
         self.NH_TCP_Flag_SYN.setAutoExclusive(False)
-        self.NH_TCP_Flag_SYN.move(170, 140)
+        self.NH_TCP_Flag_SYN.move(width/2 - 130, 140)
         self.NH_TCP_Flag_SYN.setChecked(True)
         self.NH_TCP_Flag_FIN = QtGui.QRadioButton("FIN", self.NH_TCP)
         self.NH_TCP_Flag_FIN.setAutoExclusive(False)
-        self.NH_TCP_Flag_FIN.move(170, 160)
+        self.NH_TCP_Flag_FIN.move(width/2 - 130, 160)
 
                     # TCP Payload
         self.NH_TCP_Payload = QtGui.QWidget(self.NH_TCP) 
-        self.NH_TCP_Payload.setGeometry(QtCore.QRect(300, 0, 300, 200))
+        self.NH_TCP_Payload.setGeometry(QtCore.QRect(width/2, 0, 300, 200))
         self.NH_TCP_Payload_Label = QtGui.QLabel("Payload:", self.NH_TCP_Payload)
         self.NH_TCP_Payload_XLength = QtGui.QRadioButton("String with 'X' * Length", self.NH_TCP_Payload)
         self.NH_TCP_Payload_XLength.move(30, 30)
@@ -585,19 +566,19 @@ class Main(QtGui.QMainWindow):
 
                 # UDP
         self.NH_UDP = QtGui.QWidget(self.tab_NextHeader)
-        self.NH_UDP.setGeometry(QtCore.QRect(0, 60, 600, 250))
+        self.NH_UDP.setGeometry(QtCore.QRect(0, 60, width, 250))
         self.NH_UDP.setVisible(False)
         self.NH_UDP_Label = QtGui.QLabel("Source Port:", self.NH_UDP)
-        self.NH_UDP_Label.move(30, 30)
+        self.NH_UDP_Label.move(width/2 - 270, 30)
         self.NH_UDP_SrcPort = QtGui.QLineEdit("53", self.NH_UDP)
-        self.NH_UDP_SrcPort.setGeometry(QtCore.QRect(150, 26, 60, 25))
+        self.NH_UDP_SrcPort.setGeometry(QtCore.QRect(width/2 - 150, 26, 60, 25))
         self.NH_UDP_Label_2 = QtGui.QLabel("Destination Port:", self.NH_UDP)
-        self.NH_UDP_Label_2.move(30, 70)
+        self.NH_UDP_Label_2.move(width/2 - 270, 70)
         self.NH_UDP_DstPort = QtGui.QLineEdit("53", self.NH_UDP)
-        self.NH_UDP_DstPort.setGeometry(QtCore.QRect(150, 66, 60, 25))
+        self.NH_UDP_DstPort.setGeometry(QtCore.QRect(width/2 - 150, 66, 60, 25))
                     # UDP Payload
         self.NH_UDP_Payload = QtGui.QWidget(self.NH_UDP)
-        self.NH_UDP_Payload.setGeometry(QtCore.QRect(300, 0, 300, 200))
+        self.NH_UDP_Payload.setGeometry(QtCore.QRect(width/2 , 0, 300, 200))
         self.NH_UDP_Label = QtGui.QLabel("Payload:", self.NH_UDP_Payload)
         self.NH_UDP_Payload_XLength = QtGui.QRadioButton("String with 'X' * Length", self.NH_UDP_Payload)
         self.NH_UDP_Payload_XLength.move(30, 30)
@@ -618,18 +599,19 @@ class Main(QtGui.QMainWindow):
         self.NH_UDP_Payload_NoPayload.move(30, 170)
                 # no Next Header
         self.NH_NoNextHdr = QtGui.QWidget(self.tab_NextHeader)
-        self.NH_NoNextHdr.setGeometry(QtCore.QRect(0, 60, 600, 250))
+        self.NH_NoNextHdr.setGeometry(QtCore.QRect(0, 60, width, 250))
         self.NH_NoNextHdr.setVisible(False)
         self.connect(self.NextHeader_Type, QtCore.SIGNAL('activated(int)'), self.NHConf)
 
+
         # Send Button
         self.SendButton = QtGui.QPushButton("Send", self)
-        self.SendButton.move(190, 335)
+        self.SendButton.move(width/2 - 110, height - 35)
         self.connect(self.SendButton, QtCore.SIGNAL('clicked(bool)'), self.slotSend)        
 
         # Clipboard Button
         self.ClipboardButton = QtGui.QPushButton("Clipboard", self)
-        self.ClipboardButton.move(310, 335)
+        self.ClipboardButton.move(width/2 + 10, height - 35)
         self.connect(self.ClipboardButton, QtCore.SIGNAL('clicked(bool)'), self.slotClipboard)
 
         self.show()
@@ -643,10 +625,10 @@ class Main(QtGui.QMainWindow):
         ## get SourceLinkLayerAddresses, add them to the drop-down list
         i = len(iflist)
         self.LLSrcAddr.addItem('')
-        self.NH_ICMP_RouterAdv_LLSrcAddr.addItem('')
+        #self.NDOpt_SrcLLAddr_LLSrcAddr.addItem('')
         for d in range(0, i):
             self.LLSrcAddr.addItem(get_if_hwaddr(iflist[d]))
-            self.NH_ICMP_RouterAdv_LLSrcAddr.addItem(get_if_hwaddr(iflist[d]))
+            #self.NDOpt_SrcLLAddr_LLSrcAddr.addItem(get_if_hwaddr(iflist[d]))
 
         ## get IPv6 Addresses, add them to the drop-down list
         ipv6 = read_routes6()
@@ -700,13 +682,9 @@ class Main(QtGui.QMainWindow):
         if int(self.IPv6_HopLimit.text()) >= 256: self.IPv6_HopLimit.setText('255')
         if int(self.IPv6_TrafficClass.text()) >= 256: self.IPv6_TrafficClass.setText('255')
 
-    def slotMax2_7(self):
-        """This function sets the maximum Value of a Line Edit Widget to 128 (2^7).
-        """
-        if int(self.NH_ICMP_RouterAdv_PrefixLen.text()) >= 129: 
-            self.NH_ICMP_RouterAdv_PrefixLen.setText('128')
-
     def slotExpertMode(self):
+        """The expert mode activate more options in the IPv6 header.
+"""
         self.IPv6_ExpertMode.setVisible(self.IPv6_Button_ExpertMode.isChecked())
 
     def NHConf(self):
@@ -741,6 +719,7 @@ class Main(QtGui.QMainWindow):
         self.NH_ICMP_NeighborAdv.setVisible(False)
         self.NH_ICMP_Redirect.setVisible(False)
         self.NH_ICMP_otherType.setVisible(False)
+        self.tabWidget.setTabEnabled(4,False)
         if self.ICMP_Type.currentText() == '1 - Destination Unreachable': self.NH_ICMP_DestUnreach.setVisible(True)
         elif self.ICMP_Type.currentText() == '2 - Packet Too Big': self.NH_ICMP_PTB.setVisible(True)
         elif self.ICMP_Type.currentText() == '3 - Time Exceeded': self.NH_ICMP_TimeExceeded.setVisible(True)
@@ -761,12 +740,14 @@ class Main(QtGui.QMainWindow):
         """This function is use to connect the menubar with actions.
 """
         self._savepcapAction = QtGui.QAction("Save as &pcap", None)
+        self._savePDFAction = QtGui.QAction("Save as PDF", None)
         self._saveAction = QtGui.QAction("&Save", None)
         self._loadAction = QtGui.QAction("&Load", None)
         self._exitAction = QtGui.QAction("&Exit", None)
         self._getIPv6AddrAction = QtGui.QAction("&Get local IPv6 Addresses", None)
         self._RoundTripAction = QtGui.QAction("&Round-Trip Time", None)
         self.connect(self._savepcapAction, QtCore.SIGNAL('triggered()'), self.slotSavepcap)
+        self.connect(self._savePDFAction, QtCore.SIGNAL('triggered()'), self.slotSavePDF)
         self.connect(self._saveAction, QtCore.SIGNAL('triggered()'), self.slotSave)
         self.connect(self._loadAction, QtCore.SIGNAL('triggered()'), self.slotLoad)
         self.connect(self._exitAction, QtCore.SIGNAL('triggered()'), self.slotClose)
@@ -779,6 +760,7 @@ class Main(QtGui.QMainWindow):
         menuBar = self.menuBar()
         fileMenu = menuBar.addMenu("&File")
         fileMenu.addAction(self._savepcapAction)
+        fileMenu.addAction(self._savePDFAction)
         fileMenu.addAction(self._saveAction)
         fileMenu.addAction(self._loadAction)
         fileMenu.addAction(self._exitAction)
@@ -829,32 +811,15 @@ Then you can change the whole extension header or only the values of your extens
             del self.IPv6.ExtHdr[Row]
             self.ExtHdr_tableWidget.setCurrentCell(Row,0)
 
-    def slotRouterAdvertisement(self):
-        """Is used to open the class RA and to create a Router Advertisement Next Header.
-"""
-        self.setEnabled(False)
-        ra = program_help_gui.RA(self.IPv6.RAconf)
-        ra.exec_()
-        self.setEnabled(True)
+    def slotNDOptHdr(self):
 
-    def slotNeighborSo(self):
-        """The ``slotNeighborSo`` function opens the NS class and creates a Neighbor Solicitation Header.
-"""
         self.setEnabled(False)
-        ns = program_help_gui.NS(self.IPv6.NSconf,self.IPv6DstList)
-        ns.exec_()
-        self.setEnabled(True)
-
-    def slotNeighborAd(self):
-        """Is used to open the class NA and to create a Neighbor Advertisement Next Header.
-"""
-        self.setEnabled(False)
-        na = program_help_gui.NA(self.IPv6.NAconf,self.IPv6DstList)
-        na.exec_()
+        ndopt = program_help_gui.NDOptHdr(self.IPv6.NDOpt, self.IPv6.Payload)
+        ndopt.exec_()
         self.setEnabled(True)
 
     def ask_for_filename(self):
-        """It opens a Dialog window where you can choose the pcap path for ICMP-PTB.
+        """It opens a Dialog window where you can choose the pcap path for ICMP-Typs 1, 2, 3 and 4.
 """
         self.fileDialog = QtGui.QFileDialog.getOpenFileName(self,"FileDialog")
         self.NH_ICMP_PTB_PacketFile.setText(self.fileDialog) 
@@ -917,6 +882,15 @@ Then you can change the whole extension header or only the values of your extens
                 filename=(filename+'.pcap')
             self.creatIPv6(1, filename)
 
+    def slotSavePDF(self):
+        """Will be used to save an IPv6 packet in a PDF file.
+"""
+        filename = QtGui.QFileDialog.getSaveFileName(self, "Save file", "",("pdf(*.pdf)"))
+        if filename != '':
+            if filename.endsWith('.pdf') == False:
+                filename=(filename+'.pdf')
+            self.creatIPv6(4, filename)
+
     def slotSave(self):
         """Save the configure data.
 """
@@ -930,6 +904,7 @@ Then you can change the whole extension header or only the values of your extens
         db['RAconf'] = self.IPv6.RAconf
         db['NSconf'] = self.IPv6.NSconf
         db['NAconf'] = self.IPv6.NAconf
+        db['NDOpt'] = self.IPv6.NDOpt
         db['ICMP'] = self.IPv6.ICMP
         db['PTB'] = self.IPv6.PTB
         db['TCP_UDP'] = self.IPv6.TCP_UDP
@@ -939,7 +914,6 @@ Then you can change the whole extension header or only the values of your extens
     def slotLoad(self):
         """Is used to load an IPv6 file into the GUI.
 """
-        
         filename = QtGui.QFileDialog.getOpenFileName(self,"Load File", "")
         db = shelve.open(str(filename))
         self.IPv6.EthHdr = db['EthHdr']
@@ -949,6 +923,7 @@ Then you can change the whole extension header or only the values of your extens
         self.IPv6.RAconf = db['RAconf']
         self.IPv6.NSconf = db['NSconf']
         self.IPv6.NAconf = db['NAconf']
+        self.IPv6.NDOpt = db['NDOpt']
         self.IPv6.ICMP = db['ICMP']
         self.IPv6.PTB = db['PTB']
         self.IPv6.TCP_UDP = db['TCP_UDP']
@@ -1019,11 +994,8 @@ Then you can change the whole extension header or only the values of your extens
                 self.ICMP_Type.setCurrentIndex(self.ICMP_Type.findText('133 - Router Solicitation'))
             elif self.IPv6.ICMP['indize'] == 134:
                 self.ICMP_Type.setCurrentIndex(self.ICMP_Type.findText('134 - Router Advertisement'))
-                self.NH_ICMP_RouterAdv_Prefix.setText(self.IPv6.RAconf['Prefix'])
-                self.NH_ICMP_RouterAdv_PrefixLen.setText(self.IPv6.RAconf['Prefixlen'])
                 self.NH_ICMP_RouterAdv_CHLim.setText(self.IPv6.RAconf['CHLim'])
                 self.NH_ICMP_RouterAdv_RLTime.setText(self.IPv6.RAconf['RLTime'])
-                self.NH_ICMP_RouterAdv_LLSrcAddr.setEditText(self.IPv6.RAconf['RA_LLSrcAddr'])
                 self.NH_ICMP_RouterAdv_MFlag.setChecked(self.IPv6.RAconf['M'])
                 self.NH_ICMP_RouterAdv_OFlag.setChecked(self.IPv6.RAconf['O'])
             elif self.IPv6.ICMP['indize'] == 135:
@@ -1129,6 +1101,8 @@ options::
     0 -- send
     1 -- save as *.pcap 
     2 -- save to clipboard
+    3 -- save in a Data Base
+    4 -- save as PDF
         """
         self.IPv6.EthHdr['LLDstAddr'] = str(self.LLDstAddr.text())
         self.IPv6.EthHdr['LLSrcAddr'] = str(self.LLSrcAddr.currentText())
@@ -1208,21 +1182,10 @@ options::
                 self.IPv6.ICMP['indize'] = 133
             elif self.ICMP_Type.currentText() == '134 - Router Advertisement':
                 self.IPv6.ICMP['indize'] = 134
-                if ((self.NH_ICMP_RouterAdv_Prefix.text() == '') or 
-                    (self.NH_ICMP_RouterAdv_PrefixLen.text() == '')):
-                    self.err_msg = QtGui.QMessageBox.information(None, "Info!", "Prefix and Prefix length are requiered!\n(Default: Prefix = 'fd00:141:64:1::'; Prefixlength = 64)")
-                if self.NH_ICMP_RouterAdv_Prefix.text() == '':
-                    self.NH_ICMP_RouterAdv_Prefix.setText('fd00:141:64:1::')
-                if self.NH_ICMP_RouterAdv_PrefixLen.text() == '':
-                    self.NH_ICMP_RouterAdv_PrefixLen.setText('64')
-                self.IPv6.RAconf['Prefix'] = self.NH_ICMP_RouterAdv_Prefix.text()
-                self.IPv6.RAconf['Prefixlen'] = self.NH_ICMP_RouterAdv_PrefixLen.text()
                 self.IPv6.RAconf['CHLim'] = self.NH_ICMP_RouterAdv_CHLim.text()
                 if self.IPv6.RAconf['CHLim'] == '': self.IPv6.RAconf['CHLim'] = '0'
                 self.IPv6.RAconf['RLTime'] = self.NH_ICMP_RouterAdv_RLTime.text()
                 if self.IPv6.RAconf['RLTime'] == '': self.IPv6.RAconf['RLTime'] = '1800'
-                self.IPv6.RAconf['RA_LLSrcAddr'] = self.NH_ICMP_RouterAdv_LLSrcAddr.currentText()
-                if self.IPv6.RAconf['RA_LLSrcAddr'] == ':::::': self.IPv6.RAconf['RA_LLSrcAddr'] = ''
                 self.IPv6.RAconf['M'] = self.NH_ICMP_RouterAdv_MFlag.isChecked()
                 self.IPv6.RAconf['O'] = self.NH_ICMP_RouterAdv_OFlag.isChecked()  
             elif self.ICMP_Type.currentText() == '135 - Neighbor Solicitation':
