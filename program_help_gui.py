@@ -322,25 +322,25 @@ class EH(QtGui.QDialog):
     def slotMax2_32(self):
         """This function sets the maximum Value of a Line Edit Widget to 4294967295 (2^32-1)
 """
-        if int(self.FragmentHdr_ID.text()) >= 4294967296: 
+        if self.FragmentHdr_ID.text() != '' and int(self.FragmentHdr_ID.text()) >= 4294967296: 
             self.FragmentHdr_ID.setText('4294967295')
 
     def slotMax2_13(self):
         """This function sets the maximum Value of a Line Edit Widget to 8191 (2^13 - 1).
         """
-        if int(self.FragmentHdr_FragOffset.text()) >= 8192: 
+        if self.FragmentHdr_FragOffset.text() != '' and int(self.FragmentHdr_FragOffset.text()) >= 8192: 
             self.FragmentHdr_FragOffset.setText('8191')
 
     def slotMax2_8(self):
         """This function sets the maximum Value of a Line Edit Widget to 255 (2^8-1)
 """
-        if int(self.HopByHopHdr_OptType.text()) >= 256: 
+        if self.HopByHopHdr_OptType.text() != '' and int(self.HopByHopHdr_OptType.text()) >= 256: 
             self.HopByHopHdr_OptType.setText('255')
-        if int(self.HopByHopHdr_OptLen.text()) >= 256: 
+        if self.HopByHopHdr_OptLen.text() != '' and int(self.HopByHopHdr_OptLen.text()) >= 256: 
             self.HopByHopHdr_OptLen.setText('255')
-        if int(self.DestinationHdr_OptType.text()) >= 256: 
+        if self.DestinationHdr_OptType.text() != '' and int(self.DestinationHdr_OptType.text()) >= 256: 
             self.DestinationHdr_OptType.setText('255')
-        if int(self.DestinationHdr_OptLen.text()) >= 256: 
+        if self.DestinationHdr_OptLen.text() != '' and int(self.DestinationHdr_OptLen.text()) >= 256: 
             self.DestinationHdr_OptLen.setText('255')
 
 
@@ -355,8 +355,10 @@ class NDOptHdr(QtGui.QDialog):
     * Source Link-layer Address,
     * Target Link-layer Address,
     * Prefix Information,
-    * Redirected Header and
-    * MTU.
+    * Redirected Header,
+    * MTU,
+    * Source Address List and
+    * Target Address List.
 
     All this types can be added to the ICMPv6 messages 133, 134, 135, 136 and 137.  
 """
@@ -364,12 +366,10 @@ class NDOptHdr(QtGui.QDialog):
         QtGui.QDialog.__init__(self)
         self.setWindowTitle("Neighbor Discovery Options")
         height = 400
-        width = 600
+        width = 800
         self.resize(width, height)
         self.NDOpt = NDOpt
         self.Payload = Payload
-        binOpt = ''.join(bin(int(self.NDOpt['Option'])).split('0b'))
-        while len(binOpt)<5: binOpt = '0' + binOpt # binary Value with a length of 5
 
         self.NDOpt_tabWidget = QtGui.QTabWidget(self)
         self.NDOpt_tabWidget.setGeometry(QtCore.QRect(0, 0, width, height-50))
@@ -378,8 +378,6 @@ class NDOptHdr(QtGui.QDialog):
         self.NDOpt_tabWidget.addTab(self.NDOpt_SrcLLAddr, "Source LL address")
         self.NDOpt_SrcLLAddr_Add = QtGui.QCheckBox("Add", self.NDOpt_SrcLLAddr)
         self.NDOpt_SrcLLAddr_Add.move(10, 10)
-        if str(binOpt)[0] == '1': self.NDOpt_SrcLLAddr_Add.setChecked(True)
-        else: self.NDOpt_SrcLLAddr_Add.setChecked(False)
         self.Label = QtGui.QLabel("ICMPv6 Option Source Link-Layer-Address:", self.NDOpt_SrcLLAddr)
         self.Label.move(5, 50)
         self.NDOpt_SrcLLAddr_LLSrcAddr_help = QtGui.QLineEdit(self.NDOpt_SrcLLAddr)
@@ -388,14 +386,11 @@ class NDOptHdr(QtGui.QDialog):
         self.NDOpt_SrcLLAddr_LLSrcAddr.setGeometry(QtCore.QRect(10, 75, 300, 30))
         self.NDOpt_SrcLLAddr_LLSrcAddr.setLineEdit(self.NDOpt_SrcLLAddr_LLSrcAddr_help)
         self.NDOpt_SrcLLAddr_LLSrcAddr.setEditable(True)
-        self.NDOpt_SrcLLAddr_LLSrcAddr.setEditText(str(self.NDOpt['ND_SrcLLAddr']))
                 # Destination Link layer Address
         self.NDOpt_DstLLAddr = QtGui.QWidget(self.NDOpt_tabWidget)
         self.NDOpt_tabWidget.addTab(self.NDOpt_DstLLAddr, "Destination LL address")
         self.NDOpt_DstLLAddr_Add = QtGui.QCheckBox("Add", self.NDOpt_DstLLAddr)
         self.NDOpt_DstLLAddr_Add.move(10, 10)
-        if str(binOpt)[1] == '1': self.NDOpt_DstLLAddr_Add.setChecked(True)
-        else: self.NDOpt_DstLLAddr_Add.setChecked(False)
         self.Label = QtGui.QLabel("ICMPv6 Option Destination Link-Layer-Address:", self.NDOpt_DstLLAddr)
         self.Label.move(5, 50)
         self.NDOpt_DstLLAddr_LLDstAddr_help = QtGui.QLineEdit(self.NDOpt_DstLLAddr)
@@ -404,43 +399,34 @@ class NDOptHdr(QtGui.QDialog):
         self.NDOpt_DstLLAddr_LLDstAddr.setGeometry(QtCore.QRect(10, 75, 300, 30))
         self.NDOpt_DstLLAddr_LLDstAddr.setLineEdit(self.NDOpt_DstLLAddr_LLDstAddr_help)
         self.NDOpt_DstLLAddr_LLDstAddr.setEditable(True)
-        self.NDOpt_DstLLAddr_LLDstAddr.setEditText(str(self.NDOpt['ND_DstLLAddr']))
                 # Prefix
         self.NDOpt_Prefix = QtGui.QWidget(self.NDOpt_tabWidget)
         self.NDOpt_tabWidget.addTab(self.NDOpt_Prefix, "Prefix")
         self.NDOpt_Prefix_Add = QtGui.QCheckBox("Add", self.NDOpt_Prefix)
         self.NDOpt_Prefix_Add.move(10, 10)
-        if str(binOpt)[2] == '1': self.NDOpt_Prefix_Add.setChecked(True)
-        else: self.NDOpt_Prefix_Add.setChecked(False)
         self.Label = QtGui.QLabel("Prefix:", self.NDOpt_Prefix)
         self.Label.move(5, 50)
         self.Label_2 = QtGui.QLabel("Prefix lenght:", self.NDOpt_Prefix)
         self.Label_2.move(205, 50)
         self.NDOpt_Prefix_Prefix = QtGui.QLineEdit(self.NDOpt_Prefix)
         self.NDOpt_Prefix_Prefix.setGeometry(QtCore.QRect(10, 75, 150, 30))
-        self.NDOpt_Prefix_Prefix.setText(self.NDOpt['Prefix'])
         self.NDOpt_Prefix_PrefixLen = QtGui.QLineEdit(self.NDOpt_Prefix)
         self.NDOpt_Prefix_PrefixLen.setGeometry(QtCore.QRect(210, 75, 60, 30)) 
-        self.NDOpt_Prefix_PrefixLen.setText(self.NDOpt['Prefixlen'])
         self.NDOpt_Prefix_PrefixLen.setInputMask('999')
         self.connect(self.NDOpt_Prefix_PrefixLen, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_7)
         self.NDOpt_Prefix_LFlag = QtGui.QCheckBox("on-link - flag", self.NDOpt_Prefix)
         self.NDOpt_Prefix_LFlag.move(10, 115)
-        self.NDOpt_Prefix_LFlag.setChecked(self.NDOpt['L'])
         self.NDOpt_Prefix_AFlag = QtGui.QCheckBox("autonomous address-configuration - flag", self.NDOpt_Prefix)
         self.NDOpt_Prefix_AFlag.move(10, 135)
-        self.NDOpt_Prefix_AFlag.setChecked(self.NDOpt['A'])
         self.Label_3 = QtGui.QLabel("Valid Lifetime:", self.NDOpt_Prefix)
         self.Label_3.move(5, 170)
         self.Label_4 = QtGui.QLabel("Preferred Lifetime:", self.NDOpt_Prefix)
         self.Label_4.move(205, 170)
         self.NDOpt_Prefix_ValidL = QtGui.QLineEdit(self.NDOpt_Prefix)
         self.NDOpt_Prefix_ValidL.setGeometry(QtCore.QRect(10, 195, 100, 30))
-        self.NDOpt_Prefix_ValidL.setText(self.NDOpt['ValidL'])
         self.NDOpt_Prefix_ValidL.setInputMask('9999999999')
         self.NDOpt_Prefix_PreferredL = QtGui.QLineEdit(self.NDOpt_Prefix)
         self.NDOpt_Prefix_PreferredL.setGeometry(QtCore.QRect(210, 195, 100, 30)) 
-        self.NDOpt_Prefix_PreferredL.setText(self.NDOpt['PreferredL'])
         self.NDOpt_Prefix_PreferredL.setInputMask('9999999999')
         self.connect(self.NDOpt_Prefix_PreferredL, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_32)
         self.connect(self.NDOpt_Prefix_ValidL, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_32)
@@ -449,8 +435,6 @@ class NDOptHdr(QtGui.QDialog):
         self.NDOpt_tabWidget.addTab(self.NDOpt_Redirect, "Redirected")
         self.NDOpt_Redirect_Add = QtGui.QCheckBox("Add", self.NDOpt_Redirect)
         self.NDOpt_Redirect_Add.move(10, 10)
-        if str(binOpt)[3] == '1': self.NDOpt_Redirect_Add.setChecked(True)
-        else: self.NDOpt_Redirect_Add.setChecked(False)
         self.Label = QtGui.QLabel("Capture File:", self.NDOpt_Redirect)
         self.Label.move(5, 50)
         self.Label_2 = QtGui.QLabel("Packet No.:", self.NDOpt_Redirect)
@@ -467,32 +451,148 @@ class NDOptHdr(QtGui.QDialog):
         self.NDOpt_tabWidget.addTab(self.NDOpt_MTU, "MTU")
         self.NDOpt_MTU_Add = QtGui.QCheckBox("Add", self.NDOpt_MTU)
         self.NDOpt_MTU_Add.move(10, 10)
-        if str(binOpt)[4] == '1': self.NDOpt_MTU_Add.setChecked(True)
-        else: self.NDOpt_MTU_Add.setChecked(False)
         self.Label = QtGui.QLabel("MTU:", self.NDOpt_MTU)
         self.Label.move(5, 50)
         self.NDOpt_MTU_MTU = QtGui.QLineEdit(str(self.NDOpt['MTU']), self.NDOpt_MTU)
         self.NDOpt_MTU_MTU.setInputMask('9999999999')
         self.NDOpt_MTU_MTU.setGeometry(QtCore.QRect(10, 75, 100, 30))
-        self.connect(self.NDOpt_MTU_MTU, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_32)
+        self.connect(self.NDOpt_MTU_MTU, QtCore.SIGNAL('textChanged(QString)'), self.slotMax2_32) 
+
+                # Source Address List
+        self.NDOpt_SrcAddrList = QtGui.QWidget(self.NDOpt_tabWidget)
+        self.NDOpt_tabWidget.addTab(self.NDOpt_SrcAddrList, "Source Address List")
+        self.NDOpt_SrcAddrList_Add = QtGui.QCheckBox("Add", self.NDOpt_SrcAddrList)
+        self.NDOpt_SrcAddrList_Add.move(10, 10)
+        self.NDOpt_SrcAddrList_Label = QtGui.QLabel("Source Address List:", self.NDOpt_SrcAddrList)
+        self.NDOpt_SrcAddrList_Label.move(width/2 - 160, 35)
+        self.NDOpt_SrcAddrList_AddrArray = QtGui.QTableWidget(0, 1, self.NDOpt_SrcAddrList)
+        self.NDOpt_SrcAddrList_AddrArray.setHorizontalHeaderLabels(["Source Addresses"])
+        self.NDOpt_SrcAddrList_AddrArray.setColumnWidth(0,301)
+        self.NDOpt_SrcAddrList_AddrArray.setGeometry(QtCore.QRect(width/2 - 150, 65, 300, height-200))
+        self.NDOpt_SrcAddrList_Address = QtGui.QLineEdit(self.NDOpt_SrcAddrList)
+        self.NDOpt_SrcAddrList_Address.setGeometry(QtCore.QRect(width/2 - 150, height-120, 300, 31))
+        self.NDOpt_SrcAddrList_AddButton = QtGui.QPushButton("Add",self.NDOpt_SrcAddrList)
+        self.NDOpt_SrcAddrList_AddButton.move(width/2 + 170, height-120)
+        self.NDOpt_SrcAddrList_DeleteButton = QtGui.QPushButton("Delete",self.NDOpt_SrcAddrList)
+        self.NDOpt_SrcAddrList_DeleteButton.move(width/2 + 170, height-155)
+        self.connect(self.NDOpt_SrcAddrList_AddButton, QtCore.SIGNAL('clicked()'), self.AddIP)
+        self.connect(self.NDOpt_SrcAddrList_DeleteButton, QtCore.SIGNAL('clicked()'), self.DeleteIP)
+
+                # Target Address List
+        self.NDOpt_TgtAddrList = QtGui.QWidget(self.NDOpt_tabWidget)
+        self.NDOpt_tabWidget.addTab(self.NDOpt_TgtAddrList, "Target Address List")
+        self.NDOpt_TgtAddrList_Add = QtGui.QCheckBox("Add", self.NDOpt_TgtAddrList)
+        self.NDOpt_TgtAddrList_Add.move(10, 10)
+        self.NDOpt_TgtAddrList_Label = QtGui.QLabel("Target Address List:", self.NDOpt_TgtAddrList)
+        self.NDOpt_TgtAddrList_Label.move(width/2 - 160, 35)
+        self.NDOpt_TgtAddrList_AddrArray = QtGui.QTableWidget(0, 1, self.NDOpt_TgtAddrList)
+        self.NDOpt_TgtAddrList_AddrArray.setHorizontalHeaderLabels(["Target Addresses"])
+        self.NDOpt_TgtAddrList_AddrArray.setColumnWidth(0,301)
+        self.NDOpt_TgtAddrList_AddrArray.setGeometry(QtCore.QRect(width/2 - 150, 65, 300, height-200))
+        self.NDOpt_TgtAddrList_Address = QtGui.QLineEdit(self.NDOpt_TgtAddrList)
+        self.NDOpt_TgtAddrList_Address.setGeometry(QtCore.QRect(width/2 - 150, height-120, 300, 31))
+        self.NDOpt_TgtAddrList_AddButton = QtGui.QPushButton("Add",self.NDOpt_TgtAddrList)
+        self.NDOpt_TgtAddrList_AddButton.move(width/2 + 170, height-120)
+        self.NDOpt_TgtAddrList_DeleteButton = QtGui.QPushButton("Delete",self.NDOpt_TgtAddrList)
+        self.NDOpt_TgtAddrList_DeleteButton.move(width/2 + 170, height-155)
+        self.connect(self.NDOpt_TgtAddrList_AddButton, QtCore.SIGNAL('clicked()'), self.AddIP)
+        self.connect(self.NDOpt_TgtAddrList_DeleteButton, QtCore.SIGNAL('clicked()'), self.DeleteIP)    
 
         self.OKButton = QtGui.QPushButton("OK",self)
         self.OKButton.move(width/2 - 50, height - 35)
         self.connect(self.OKButton, QtCore.SIGNAL('clicked()'), self.ready)
         
+        ## get SourceLinkLayerAddresses, add them to the drop-down list
+        iflist = get_if_list()
+        i = len(iflist)
+        self.NDOpt_SrcLLAddr_LLSrcAddr.addItem('')
+        for d in range(0, i):
+            self.NDOpt_SrcLLAddr_LLSrcAddr.addItem(get_if_hwaddr(iflist[d]))
+
         self.show()
+
+        if self.NDOpt['Option'] & 1: self.NDOpt_SrcLLAddr_Add.setChecked(True)
+        else: self.NDOpt_SrcLLAddr_Add.setChecked(False)
+        if self.NDOpt['Option'] & 2: self.NDOpt_DstLLAddr_Add.setChecked(True)
+        else: self.NDOpt_DstLLAddr_Add.setChecked(False)
+        if self.NDOpt['Option'] & 4: self.NDOpt_Prefix_Add.setChecked(True)
+        else: self.NDOpt_Prefix_Add.setChecked(False)
+        if self.NDOpt['Option'] & 8: self.NDOpt_Redirect_Add.setChecked(True)
+        else: self.NDOpt_Redirect_Add.setChecked(False)
+        if self.NDOpt['Option'] & 16: self.NDOpt_MTU_Add.setChecked(True)
+        else: self.NDOpt_MTU_Add.setChecked(False)
+        if self.NDOpt['Option'] & 32: self.NDOpt_SrcAddrList_Add.setChecked(True)
+        else: self.NDOpt_SrcAddrList_Add.setChecked(False)
+        if self.NDOpt['Option'] & 64: self.NDOpt_TgtAddrList_Add.setChecked(True)
+        else: self.NDOpt_TgtAddrList_Add.setChecked(False)
+        self.NDOpt_SrcLLAddr_LLSrcAddr.setEditText(str(self.NDOpt['ND_SrcLLAddr']))
+        self.NDOpt_DstLLAddr_LLDstAddr.setEditText(str(self.NDOpt['ND_DstLLAddr']))
+        self.NDOpt_Prefix_Prefix.setText(self.NDOpt['Prefix'])
+        self.NDOpt_Prefix_PrefixLen.setText(self.NDOpt['Prefixlen'])
+        self.NDOpt_Prefix_LFlag.setChecked(self.NDOpt['L'])
+        self.NDOpt_Prefix_AFlag.setChecked(self.NDOpt['A'])
+        self.NDOpt_Prefix_ValidL.setText(self.NDOpt['ValidL'])
+        self.NDOpt_Prefix_PreferredL.setText(self.NDOpt['PreferredL'])
+        i = len(self.NDOpt['SrcAddrList'])
+        for d in range(i):
+            self.NDOpt_SrcAddrList_AddrArray.insertRow(d)
+            t1 = QtGui.QTableWidgetItem(self.NDOpt['SrcAddrList'][d])
+            self.NDOpt_SrcAddrList_AddrArray.setItem(d, 0, t1)
+        i = len(self.NDOpt['TgtAddrList'])
+        for d in range(i):
+            self.NDOpt_TgtAddrList_AddrArray.insertRow(d)
+            t1 = QtGui.QTableWidgetItem(self.NDOpt['TgtAddrList'][d])
+            self.NDOpt_TgtAddrList_AddrArray.setItem(d, 0, t1)
+
+
+    def AddIP(self):
+        """This funcion adds an IPv6 address from the adress field into the address array. (Source and Target Address List)
+"""
+        if self.NDOpt_tabWidget.tabText(self.NDOpt_tabWidget.currentIndex()) == "Source Address List":
+            numRows = self.NDOpt_SrcAddrList_AddrArray.rowCount()
+            if numRows < 16:
+                self.NDOpt_SrcAddrList_AddrArray.insertRow(numRows)
+                t1 = QtGui.QTableWidgetItem(self.NDOpt_SrcAddrList_Address.text())
+                self.NDOpt_SrcAddrList_AddrArray.setItem(numRows, 0, t1)
+            else:
+                self.err_msg = QtGui.QMessageBox.information(None, "Info!", "More addresses are not possible!")
+        elif self.NDOpt_tabWidget.tabText(self.NDOpt_tabWidget.currentIndex()) == "Target Address List":
+            numRows = self.NDOpt_TgtAddrList_AddrArray.rowCount()
+            if numRows < 16:
+                self.NDOpt_TgtAddrList_AddrArray.insertRow(numRows)
+                t1 = QtGui.QTableWidgetItem(self.NDOpt_TgtAddrList_Address.text())
+                self.NDOpt_TgtAddrList_AddrArray.setItem(numRows, 0, t1)
+            else:
+                self.err_msg = QtGui.QMessageBox.information(None, "Info!", "More addresses are not possible!")
+
+
+    def DeleteIP(self):
+        """A marked IPv6 address from the array can be deleted with this function. (Source and Target Address List)
+"""
+        if self.NDOpt_tabWidget.tabText(self.NDOpt_tabWidget.currentIndex()) == "Source Address List":
+            Row = self.NDOpt_SrcAddrList_AddrArray.currentRow()
+            if Row >= 0:
+                self.NDOpt_SrcAddrList_AddrArray.removeRow(Row)
+        elif self.NDOpt_tabWidget.tabText(self.NDOpt_tabWidget.currentIndex()) == "Target Address List":
+            Row = self.NDOpt_TgtAddrList_AddrArray.currentRow()
+            if Row >= 0:
+                self.NDOpt_TgtAddrList_AddrArray.removeRow(Row)
 
     def slotMax2_32(self):
         """This function sets the maximum Value of a Line Edit Widget to 4294967295 (2^32-1).
 """
-        if int(self.NDOpt_MTU_MTU.text()) >= 4294967296: self.NDOpt_MTU_MTU.setText('4294967295')
-        if int(self.NDOpt_Prefix_ValidL.text()) >= 4294967296: self.NDOpt_Prefix_ValidL.setText('4294967295')
-        if int(self.NDOpt_Prefix_PreferredL.text()) >= 4294967296: self.NDOpt_Prefix_PreferredL.setText('4294967295')
+        if self.NDOpt_MTU_MTU.text() != '' and int(self.NDOpt_MTU_MTU.text()) >= 4294967296:
+            self.NDOpt_MTU_MTU.setText('4294967295')
+        if self.NDOpt_Prefix_ValidL.text() != '' and int(self.NDOpt_Prefix_ValidL.text()) >= 4294967296:
+            self.NDOpt_Prefix_ValidL.setText('4294967295')
+        if self.NDOpt_Prefix_PreferredL.text() != '' and int(self.NDOpt_Prefix_PreferredL.text()) >= 4294967296:
+            self.NDOpt_Prefix_PreferredL.setText('4294967295')
 
     def slotMax2_7(self):
         """This function sets the maximum Value of a Line Edit Widget to 128 (2^7).
         """
-        if int(self.NDOpt_Prefix_PrefixLen.text()) >= 129: self.NDOpt_Prefix_PrefixLen.setText('128')
+        if self.NDOpt_Prefix_PrefixLen.text() != '' and int(self.NDOpt_Prefix_PrefixLen.text()) >= 129:
+            self.NDOpt_Prefix_PrefixLen.setText('128')
 
 
     def ask_for_filename(self):
@@ -505,11 +605,13 @@ class NDOptHdr(QtGui.QDialog):
         """This function close the Neighbor Discovery Options window and save the information.
 """
         self.NDOpt['Option'] = 0
-        if self.NDOpt_SrcLLAddr_Add.isChecked(): self.NDOpt['Option'] += 0b10000
-        if self.NDOpt_DstLLAddr_Add.isChecked(): self.NDOpt['Option'] += 0b01000
-        if self.NDOpt_Prefix_Add.isChecked(): self.NDOpt['Option'] += 0b00100
-        if self.NDOpt_Redirect_Add.isChecked(): self.NDOpt['Option'] += 0b00010
-        if self.NDOpt_MTU_Add.isChecked(): self.NDOpt['Option'] += 0b00001
+        if self.NDOpt_SrcLLAddr_Add.isChecked(): self.NDOpt['Option'] += 1
+        if self.NDOpt_DstLLAddr_Add.isChecked(): self.NDOpt['Option'] += 2
+        if self.NDOpt_Prefix_Add.isChecked(): self.NDOpt['Option'] += 4
+        if self.NDOpt_Redirect_Add.isChecked(): self.NDOpt['Option'] += 8
+        if self.NDOpt_MTU_Add.isChecked(): self.NDOpt['Option'] += 16
+        if self.NDOpt_SrcAddrList_Add.isChecked(): self.NDOpt['Option'] += 32
+        if self.NDOpt_TgtAddrList_Add.isChecked(): self.NDOpt['Option'] += 64
         self.NDOpt['ND_SrcLLAddr'] = self.NDOpt_SrcLLAddr_LLSrcAddr.currentText()
         if self.NDOpt['ND_SrcLLAddr'] == ':::::': self.NDOpt['ND_SrcLLAddr'] = '00:00:00:00:00:00'
         self.NDOpt['ND_DstLLAddr'] = self.NDOpt_DstLLAddr_LLDstAddr.currentText()
@@ -533,6 +635,18 @@ class NDOptHdr(QtGui.QDialog):
             return
         if self.NDOpt_MTU_MTU.text() == '': self.NDOpt_MTU_MTU.setText('1280')
         self.NDOpt['MTU'] = self.NDOpt_MTU_MTU.text()
+        self.addresses=[]
+        i = self.NDOpt_SrcAddrList_AddrArray.rowCount()
+        for d in range(i):
+            self.addresses.append([])
+            self.addresses[d] = str(QtGui.QTableWidgetItem.text(self.NDOpt_SrcAddrList_AddrArray.item(d, 0)))
+        self.NDOpt['SrcAddrList'] = self.addresses
+        self.addresses=[]
+        i = self.NDOpt_TgtAddrList_AddrArray.rowCount()
+        for d in range(i):
+            self.addresses.append([])
+            self.addresses[d] = str(QtGui.QTableWidgetItem.text(self.NDOpt_TgtAddrList_AddrArray.item(d, 0)))
+        self.NDOpt['TgtAddrList'] = self.addresses
 
         self.accept()
 
@@ -648,8 +762,8 @@ class RoundTrip(QtGui.QDialog):
                 timediff = []
                 timediffstr = ''
                 while d < len(request):
-                    timediff.append((reply[d].time - request[d].time)*1000)
-                    timediffstr = timediffstr + str((reply[d].time - request[d].time)*1000)+' ms\n'
+                    timediff.append((reply[d].sent_time - request[d].time)*1000)
+                    timediffstr = timediffstr + str((reply[d].sent_time - request[d].time)*1000)+' ms\n'
                     d += 1
                 info = 'The Round-Trip Time of the individual pings are: \n'+timediffstr+'\nThe mean Time is '+ str(sum(timediff)/int(self.pktcount.text())) +' ms.'
             else:
